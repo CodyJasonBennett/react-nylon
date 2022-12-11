@@ -1,7 +1,5 @@
-import * as React from 'react'
-import { EFFECT, LAYOUT, NOEFFECT, EFFECTONCE, LAYOUTONCE } from './constants'
+import { ReactInternal, EFFECT, LAYOUT, NOEFFECT, EFFECTONCE, LAYOUTONCE } from './constants'
 import { scheduleUpdateOnFiber } from './scheduler'
-import type { MutableRefObject } from 'react'
 import type { Fiber, Hook, Queue, Effect } from './types'
 
 let currentlyRenderingFiber: any = null
@@ -9,22 +7,18 @@ let workInProgressHook: any = null
 let currentHook: any = null
 let effectListIndex = 0
 
-const ReactCurrentDispatcher = (React as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
-  .ReactCurrentDispatcher as MutableRefObject<any>
-
 export const renderWithHooks = (current: Fiber | null, workInProgress: Fiber, Component: any): any => {
   currentlyRenderingFiber = workInProgress
 
   if (current != null) {
-    ReactCurrentDispatcher.current = HookDispatcherOnUpdate
+    ReactInternal.ReactCurrentDispatcher.current = HookDispatcherOnUpdate
   } else {
-    ReactCurrentDispatcher.current = HookDispatcherOnMount
+    ReactInternal.ReactCurrentDispatcher.current = HookDispatcherOnMount
   }
 
-  const children =
-    Component === Symbol.for('react.fragment')
-      ? currentlyRenderingFiber.props.children
-      : Component(currentlyRenderingFiber.props)
+  let children = currentlyRenderingFiber.props.children
+  if (typeof Component === 'function') children = Component(currentlyRenderingFiber.props)
+
   currentlyRenderingFiber = null
   workInProgressHook = null
   currentHook = null

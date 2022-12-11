@@ -1,3 +1,7 @@
+import * as React from 'react'
+
+export const ReactInternal = (React as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
+
 export const HostRoot = 0
 export const FunctionComponent = 1
 export const HostComponent = 2

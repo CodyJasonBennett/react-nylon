@@ -24,7 +24,7 @@ export interface Fiber<P = any> {
   key?: Key
   ref?: any
   index?: number
-  type?: string | Function
+  type?: string | symbol | Function
   tag: number
   props?: any
   return?: Fiber<P>
