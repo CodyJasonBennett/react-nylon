@@ -12,12 +12,12 @@ import {
   LAYOUTONCE,
   LAYOUT,
 } from './constants'
-import { ReactCurrentHostConfig, schedule } from './scheduler'
+import { ReactCurrentHostConfig, startTransition } from './scheduler'
 import type { Fiber } from './types'
 
 export const commitRoot = (workInProgressRoot: Fiber, deletions: Fiber[]): void => {
   for (const fiber of deletions) commitWork(fiber)
-  schedule(() => commitHookEffectList(workInProgressRoot))
+  startTransition(() => commitHookEffectList(workInProgressRoot))
   commitHookLayoutEffectList(workInProgressRoot)
   commitWork(workInProgressRoot.child)
   deletions.length = 0
@@ -25,7 +25,7 @@ export const commitRoot = (workInProgressRoot: Fiber, deletions: Fiber[]): void 
 export const commitWork = (currentFiber: Fiber | null | undefined): void => {
   if (currentFiber == null) return
   const fiberTag = currentFiber.effectTag
-  schedule(() => commitHookEffectList(currentFiber, fiberTag))
+  startTransition(() => commitHookEffectList(currentFiber, fiberTag))
   commitHookLayoutEffectList(currentFiber, fiberTag)
 
   let returnFiber = currentFiber.return
@@ -106,7 +106,7 @@ const commitDeletion = (currentFiber: Fiber, returnInstance: any): void => {
       commitDeletion(currentFiber.child, returnInstance)
     }
   }
-  schedule(() => commitHookEffectList(currentFiber, DELETION))
+  startTransition(() => commitHookEffectList(currentFiber, DELETION))
   commitHookLayoutEffectList(currentFiber, DELETION)
   handleSubRef(currentFiber)
 }

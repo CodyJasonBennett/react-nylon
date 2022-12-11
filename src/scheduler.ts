@@ -26,7 +26,7 @@ export const render = <Type, Props, Container, PublicInstance, Instance, TextIns
   ReactCurrentHostConfig.current = config
   workInProgress = rootFiber
   scheduleRoot(rootFiber)
-  schedule(bridge)
+  startTransition(bridge)
 }
 
 const scheduleRoot = (rootFiber: Fiber): void => {
@@ -57,7 +57,7 @@ export const scheduleUpdateOnFiber = (oldFiber: Fiber): void => {
   }
   nextUnitOfWork = newFiber
   workInProgress = newFiber
-  schedule(bridge)
+  startTransition(bridge)
 }
 
 const updateFunctionComponent = (current: Fiber, workInProgress: Fiber, Component: any): void => {
@@ -167,67 +167,45 @@ const performUnitOfWork = <P>(unitOfWorkFiber: Fiber<P>): Fiber<P> | null => {
   return null
 }
 
-const bridge = (): void => {
-  while (nextUnitOfWork != null && !shouldYield()) {
+const bridge = (deadline: IdleDeadline): void => {
+  while (nextUnitOfWork != null && deadline.timeRemaining() > 0) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
   }
 
-  if (nextUnitOfWork != null) return schedule(bridge)
+  if (nextUnitOfWork != null) return startTransition(bridge)
 
-  if (nextUnitOfWork == null && workInProgressRoot != null) {
+  if (workInProgressRoot != null) {
     commitRoot(workInProgressRoot, deletions)
     currentRoot = workInProgressRoot
     workInProgressRoot = null
     workInProgress = null
   }
-  if (nextUnitOfWork == null && workInProgress != null) {
+  if (workInProgress != null) {
     commitRoot(workInProgress, deletions)
     workInProgress = null
   }
 }
 
-type TaskCallback = (...args: any[]) => any
-interface Task {
-  callback: TaskCallback | null
-  fiber?: Fiber
+const workQueue: Function[] = []
+let pending: boolean = false
+
+if (typeof window !== 'undefined') {
+  // @ts-expect-error Safari polyfill https://caniuse.com/requestidlecallback
+  window.requestIdleCallback ??= (callback: (deadline: IdleDeadline) => void) =>
+    callback({ didTimeout: false, timeRemaining: () => Number.MAX_VALUE })
 }
 
-const queue: Task[] = []
-const threshold: number = 5
-const transitions: TaskCallback[] = []
-let deadline: number = 0
-
-const startTransition = (cb: TaskCallback): void => {
-  transitions.push(cb) && translate()
-}
-
-const shouldYield = (): boolean => performance.now() >= deadline
-
-export const schedule = (callback: TaskCallback): void => {
-  queue.push({ callback })
-  startTransition(flush)
-}
-
-const task = (pending: boolean): Function => {
-  const cb = (): void => transitions.splice(0, 1).forEach((c) => c())
-  return () => (pending ? setTimeout(cb) : queueMicrotask(cb))
-}
-
-let translate = task(false)
-
-const flush = (): void => {
-  deadline = performance.now() + threshold
-  let job = queue[0]
-  while (job && !shouldYield()) {
-    const { callback } = job
-    job.callback = null
-    const next = typeof callback === 'function' && callback()
-    if (next) {
-      job.callback = next
-    } else {
-      queue.shift()
-    }
-    job = queue[0]
+function flushQueue(deadline: IdleDeadline): void {
+  pending = true
+  while (deadline.timeRemaining() > 0 && workQueue.length > 0) {
+    const work = workQueue.shift()
+    work?.(deadline)
   }
-  job && (translate = task(shouldYield())) && startTransition(flush)
+  if (workQueue.length > 0) requestIdleCallback(flushQueue)
+  else pending = false
+}
+
+export const startTransition = (work: Function): void => {
+  workQueue.push(work)
+  if (!pending) requestIdleCallback(flushQueue)
 }
