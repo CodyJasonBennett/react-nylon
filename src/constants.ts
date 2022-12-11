@@ -1,6 +1,10 @@
 import * as React from 'react'
+import type { HostConfig } from './types'
 
-export const ReactInternal = (React as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
+export const { ReactCurrentDispatcher } = (React as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
+export const ReactCurrentHostConfig = { current: null! } as React.MutableRefObject<
+  HostConfig<any, any, any, any, any, any>
+>
 
 export const HostRoot = 0
 export const FunctionComponent = 1

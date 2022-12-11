@@ -1,4 +1,4 @@
-import { ReactInternal, EFFECT, LAYOUT, NOEFFECT, EFFECTONCE, LAYOUTONCE } from './constants'
+import { ReactCurrentDispatcher, EFFECT, LAYOUT, NOEFFECT, EFFECTONCE, LAYOUTONCE } from './constants'
 import { scheduleUpdateOnFiber } from './scheduler'
 import type { Fiber, Hook, Queue, Effect } from './types'
 
@@ -11,9 +11,9 @@ export const renderWithHooks = (current: Fiber | null, workInProgress: Fiber, Co
   currentlyRenderingFiber = workInProgress
 
   if (current != null) {
-    ReactInternal.ReactCurrentDispatcher.current = HookDispatcherOnUpdate
+    ReactCurrentDispatcher.current = HookDispatcherOnUpdate
   } else {
-    ReactInternal.ReactCurrentDispatcher.current = HookDispatcherOnMount
+    ReactCurrentDispatcher.current = HookDispatcherOnMount
   }
 
   let children = currentlyRenderingFiber.props.children

@@ -1,4 +1,5 @@
 import {
+  ReactCurrentHostConfig,
   DELETION,
   HostComponent,
   HostRoot,
@@ -12,7 +13,7 @@ import {
   LAYOUTONCE,
   LAYOUT,
 } from './constants'
-import { ReactCurrentHostConfig, startTransition } from './scheduler'
+import { startTransition } from './scheduler'
 import type { Fiber } from './types'
 
 export const commitRoot = (workInProgressRoot: Fiber, deletions: Fiber[]): void => {
@@ -42,7 +43,7 @@ export const commitWork = (currentFiber: Fiber | null | undefined): void => {
     const nextFiber = currentFiber
     if (nextFiber.stateNode != null) {
       if (nextFiber.return?.tag === FunctionComponent && nextFiber.return?.siblingNode != null) {
-        ReactCurrentHostConfig.current!.insertBefore(returnInstance, nextFiber.stateNode, nextFiber.return?.siblingNode)
+        ReactCurrentHostConfig.current.insertBefore(returnInstance, nextFiber.stateNode, nextFiber.return?.siblingNode)
       } else {
         let nextInstance = null
         let sibling = nextFiber.sibling
@@ -54,9 +55,9 @@ export const commitWork = (currentFiber: Fiber | null | undefined): void => {
           sibling = sibling.sibling
         }
         if (nextInstance != null) {
-          ReactCurrentHostConfig.current!.insertBefore(returnInstance, nextFiber.stateNode, nextInstance)
+          ReactCurrentHostConfig.current.insertBefore(returnInstance, nextFiber.stateNode, nextInstance)
         } else {
-          ReactCurrentHostConfig.current!.appendChild(returnInstance, nextFiber.stateNode)
+          ReactCurrentHostConfig.current.appendChild(returnInstance, nextFiber.stateNode)
         }
       }
     }
@@ -65,7 +66,7 @@ export const commitWork = (currentFiber: Fiber | null | undefined): void => {
   } else if (currentFiber.effectTag === UPDATE) {
     if (currentFiber.tag === HostText) {
       if (currentFiber.alternate?.props.text !== currentFiber.props.text) {
-        ReactCurrentHostConfig.current!.commitTextUpdate(
+        ReactCurrentHostConfig.current.commitTextUpdate(
           currentFiber.stateNode as any,
           currentFiber.alternate?.props.text,
           currentFiber.props.text,
@@ -74,7 +75,7 @@ export const commitWork = (currentFiber: Fiber | null | undefined): void => {
       }
     } else {
       if (currentFiber.tag !== FunctionComponent) {
-        ReactCurrentHostConfig.current!.commitUpdate(
+        ReactCurrentHostConfig.current.commitUpdate(
           currentFiber.stateNode as any,
           currentFiber.alternate?.props,
           currentFiber.props,
@@ -92,7 +93,7 @@ export const commitWork = (currentFiber: Fiber | null | undefined): void => {
     const publicInstance =
       currentFiber.stateNode == null
         ? null
-        : ReactCurrentHostConfig.current!.getPublicInstance(currentFiber.stateNode as any)
+        : ReactCurrentHostConfig.current.getPublicInstance(currentFiber.stateNode as any)
     typeof currentFiber.ref === 'function'
       ? currentFiber.ref(publicInstance)
       : (currentFiber.ref.current = publicInstance)
@@ -100,7 +101,7 @@ export const commitWork = (currentFiber: Fiber | null | undefined): void => {
 }
 const commitDeletion = (currentFiber: Fiber, returnInstance: any): void => {
   if (currentFiber.stateNode != null) {
-    ReactCurrentHostConfig.current!.removeChild(returnInstance, currentFiber.stateNode)
+    ReactCurrentHostConfig.current.removeChild(returnInstance, currentFiber.stateNode)
   } else {
     if (currentFiber.child != null) {
       commitDeletion(currentFiber.child, returnInstance)
