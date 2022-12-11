@@ -24,7 +24,7 @@ function childReconciler(shouldTrackSideEffects: boolean): (current: Fiber | nul
     created.return = returnFiber
     return created
   }
-  function updateElement(wip: Fiber, oldFiber: Fiber, newChild: any): Fiber | null {
+  function updateElement(wip: Fiber, oldFiber: Fiber, newChild: any): Fiber {
     if (oldFiber != null) {
       if (oldFiber.type === newChild.type) {
         let newFiber: Fiber | null = null
@@ -62,12 +62,7 @@ function childReconciler(shouldTrackSideEffects: boolean): (current: Fiber | nul
       return lastPlaceIndex
     }
   }
-  function updateFromMap(
-    existingChildren: Map<any, any>,
-    returnFiber: Fiber,
-    newIdx: number,
-    newChild: any,
-  ): Fiber | null {
+  function updateFromMap(existingChildren: Map<any, any>, returnFiber: Fiber, newIdx: number, newChild: any): Fiber {
     const matchedFiber = existingChildren.get(newChild.key ?? newIdx)
     return updateElement(returnFiber, matchedFiber, newChild)
   }
@@ -118,13 +113,8 @@ function childReconciler(shouldTrackSideEffects: boolean): (current: Fiber | nul
     for (; oldChildFiber != null && newIdx < newChilds.length; newIdx++) {
       nextOldFiber = oldChildFiber.sibling
       const newFiber = updateSlot(wip, oldChildFiber, newChilds[newIdx])
-      if (newFiber == null) {
-        if (oldChildFiber == null) {
-          oldChildFiber = nextOldFiber
-        }
-        break
-      }
-      if (oldChildFiber != null && newFiber.alternate == null) {
+      if (newFiber == null) break
+      if (newFiber.alternate == null) {
         deleteChild(wip.child, oldChildFiber)
       }
       lastPlaceIndex = placeChild(newFiber, lastPlaceIndex, newIdx)
@@ -165,18 +155,17 @@ function childReconciler(shouldTrackSideEffects: boolean): (current: Fiber | nul
     const existingChildren = mapRemainingChildren(wip, oldChildFiber)
     for (; newIdx < newChilds.length; newIdx++) {
       const newFiber = updateFromMap(existingChildren, wip, newIdx, newChilds[newIdx])
-      if (newFiber != null) {
-        if (newFiber.alternate != null) {
-          existingChildren.delete(newFiber.key ?? newIdx)
-        }
-        lastPlaceIndex = placeChild(newFiber, lastPlaceIndex, newIdx)
-        if (previousNewFiber == null) {
-          resultingFirstChild = newFiber
-        } else {
-          previousNewFiber.sibling = newFiber
-        }
-        previousNewFiber = newFiber
+
+      if (newFiber.alternate != null) {
+        existingChildren.delete(newFiber.key ?? newIdx)
       }
+      lastPlaceIndex = placeChild(newFiber, lastPlaceIndex, newIdx)
+      if (previousNewFiber == null) {
+        resultingFirstChild = newFiber
+      } else {
+        previousNewFiber.sibling = newFiber
+      }
+      previousNewFiber = newFiber
     }
     for (const [, child] of existingChildren) deleteChild(resultingFirstChild, child)
     functionComponentNodeTag(resultingFirstChild)
@@ -194,11 +183,7 @@ function childReconciler(shouldTrackSideEffects: boolean): (current: Fiber | nul
     return existingChildren
   }
   function reconcileChildFibers(current: Fiber | null | undefined, wip: Fiber, newChild: any): void {
-    if (Array.isArray(newChild)) {
-      reconcileChildrenArray(current, wip, newChild)
-    } else {
-      reconcileChildrenArray(current, wip, [newChild])
-    }
+    reconcileChildrenArray(current, wip, Array.isArray(newChild) ? newChild : [newChild])
   }
 
   return reconcileChildFibers
