@@ -1,34 +1,6 @@
 import * as React from 'react'
 import { createRoot, type HostConfig } from 'react-nylon'
 
-function App() {
-  const [count, setCount] = React.useState(0)
-  const ref = React.useRef<HTMLButtonElement>(null!)
-  React.useReducer((state: any, action: any) => state, {})
-  React.useState(() => console.log('useState'))
-  React.useMemo(() => console.log('useMemo'), [])
-  React.useImperativeHandle(React.useRef(), () => void console.log('useImperativeHandle'))
-  React.useCallback(() => console.log('useCallback'), [])
-  React.useCallback(() => console.log('useCallback with Update'), [count])
-  React.useInsertionEffect(() => console.log('useInsertionEffect'), [])
-  React.useInsertionEffect(() => console.log('useInsertionEffect with update'), [count])
-  React.useTransition()
-  React.useSyncExternalStore(null!, null!)
-  React.useLayoutEffect(() => console.log('useLayoutEffect'), [])
-  React.useLayoutEffect(() => console.log('useLayoutEffect with update'), [count])
-  React.useEffect(() => console.log('useEffect'), [])
-  React.useEffect(() => console.log('useEffect with update'), [count])
-  console.log('render')
-  return (
-    <>
-      <h1 ref={React.useCallback((ref: any) => console.log('ref', ref), [])}>{count}</h1>
-      <button ref={ref} onClick={() => setCount((v) => v + 1)}>
-        +
-      </button>
-    </>
-  )
-}
-
 type Instance = HTMLElement
 type TextInstance = Text
 
@@ -37,20 +9,18 @@ function applyProps<T extends Instance>(instance: T, oldProps: any, newProps: an
     const oldValue = oldProps[key]
     const newValue = newProps[key]
 
-    if (oldValue == newValue || key === 'children') continue
+    if (Object.is(oldValue, newValue) || key === 'children') continue
 
     if (key === 'style') {
-      for (const k in { ...oldValue, ...newValue }) {
+      for (const k in { ...oldValue, ...newValue } as CSSStyleDeclaration) {
         if (oldValue?.[k] !== newValue?.[k]) {
-          ;(instance[key] as any)[k] = newValue?.[k] ?? ''
+          instance.style[k] = newValue?.[k] ?? ''
         }
       }
     } else if (key.startsWith('on')) {
       const event = key.slice(2).toLowerCase()
       if (oldValue) instance.removeEventListener(event, oldValue)
       instance.addEventListener(event, newValue)
-    } else if (key in instance && !(instance instanceof SVGElement)) {
-      ;(instance as any)[key] = newValue ?? ''
     } else if (newValue == null) {
       instance.removeAttribute(key)
     } else {
@@ -88,4 +58,17 @@ const config: HostConfig<string, any, HTMLElement, Instance, Instance, TextInsta
   },
 }
 
-createRoot(document.getElementById('root')!, config).render(<App />)
+let i = 1
+
+function App() {
+  const id = React.useMemo(() => i++, [])
+  const [count, setCount] = React.useState(0)
+  React.useEffect(() => console.log({ id, count }), [id, count])
+  return <h1 onClick={() => setCount((v) => v + 1)}>Hello from renderer {id}</h1>
+}
+
+await Promise.all(
+  ['root', 'root2', 'root3'].map(async (id) => {
+    createRoot(document.getElementById(id)!, config).render(<App />)
+  }),
+)
