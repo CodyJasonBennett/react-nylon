@@ -1,11 +1,20 @@
 {
-  "name": "four-jsx",
+  "name": "react-nylon",
   "version": "0.0.0",
-  "description": "",
-  "keywords": [],
+  "description": "react-reconciler implemented in < 4KB.",
+  "keywords": [
+    "react",
+    "renderers",
+    "reconciliation",
+    "jsx",
+    "hooks",
+    "vdom",
+    "fiber",
+    "minimal"
+  ],
   "author": "Cody Bennett (https://github.com/CodyJasonBennett)",
-  "homepage": "https://github.com/CodyJasonBennett/four-jsx",
-  "repository": "https://github.com/CodyJasonBennett/four-jsx",
+  "homepage": "https://github.com/CodyJasonBennett/react-nylon",
+  "repository": "https://github.com/CodyJasonBennett/react-nylon",
   "license": "MIT",
   "files": [
     "dist"

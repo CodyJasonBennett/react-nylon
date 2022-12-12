@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { createRoot, type HostConfig } from '../src'
+import { createRoot, type HostConfig } from 'react-nylon'
 
 function App() {
   const [count, setCount] = React.useState(0)
