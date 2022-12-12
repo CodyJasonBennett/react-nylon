@@ -112,7 +112,6 @@ export function createRoot<Type, Props, Container, PublicInstance, Instance, Tex
     },
     unmount() {
       this.render(null)
-      configs.delete(container)
       rootFiber = null
     },
   }

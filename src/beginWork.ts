@@ -25,7 +25,7 @@ function updateHost(current: Fiber | null, workInProgress: Fiber): void {
   reconcileChildFibers(current, workInProgress, newChildren)
 }
 
-function updateHostText(currentFiber: Fiber | null, workInProgress: Fiber): void {
+function updateHostText(current: Fiber | null, workInProgress: Fiber): void {
   if (workInProgress.stateNode == null) {
     workInProgress.stateNode = ReactCurrentHostConfig.current.createTextInstance(
       workInProgress.props.text,
@@ -56,7 +56,7 @@ function mountHost(current: Fiber | null, workInProgress: Fiber): void {
   mountChildFibers(current, workInProgress, newChildren)
 }
 
-function mountHostText(currentFiber: Fiber | null, workInProgress: Fiber): void {
+function mountHostText(current: Fiber | null, workInProgress: Fiber): void {
   if (workInProgress.stateNode == null) {
     workInProgress.stateNode = ReactCurrentHostConfig.current.createTextInstance(
       workInProgress.props.text,

@@ -205,11 +205,12 @@ function mapRemainingChildren(returnFiber: Fiber, currentFirstChild: Fiber): Map
   }
   return existingChildren
 }
-export function reconcileChildFibers(current: Fiber | null | undefined, wip: Fiber, newChild: any): void {
+
+export function reconcileChildFibers(current: Fiber | null | undefined, wip: Fiber, newChildren: any): void {
   shouldTrackSideEffects = true
-  reconcileChildrenArray(current, wip, Array.isArray(newChild) ? newChild : [newChild])
+  reconcileChildrenArray(current, wip, Array.isArray(newChildren) ? newChildren : [newChildren])
 }
-export function mountChildFibers(current: Fiber | null | undefined, wip: Fiber, newChild: any): void {
+export function mountChildFibers(current: Fiber | null | undefined, wip: Fiber, newChildren: any): void {
   shouldTrackSideEffects = false
-  reconcileChildrenArray(current, wip, Array.isArray(newChild) ? newChild : [newChild])
+  reconcileChildrenArray(current, wip, Array.isArray(newChildren) ? newChildren : [newChildren])
 }
