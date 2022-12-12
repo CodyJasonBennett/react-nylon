@@ -3,10 +3,27 @@ import { render } from '../src'
 
 function App() {
   const [count, setCount] = React.useState(0)
+  const ref = React.useRef<HTMLButtonElement>(null!)
+  React.useState(() => console.log('useState'))
+  React.useMemo(() => console.log('useMemo'), [])
+  React.useImperativeHandle(React.useRef(), () => void console.log('useImperativeHandle'))
+  React.useCallback(() => console.log('useCallback'), [])
+  React.useCallback(() => console.log('useCallback with Update'), [count])
+  React.useInsertionEffect(() => console.log('useInsertionEffect'), [])
+  React.useInsertionEffect(() => console.log('useInsertionEffect with update'), [count])
+  React.useTransition()
+  React.useSyncExternalStore(null, null)
+  React.useLayoutEffect(() => console.log('useLayoutEffect'), [])
+  React.useLayoutEffect(() => console.log('useLayoutEffect with update'), [count])
+  React.useEffect(() => console.log('useEffect'), [])
+  React.useEffect(() => console.log('useEffect with update'), [count])
+  console.log('render')
   return (
     <>
-      <h1>{count}</h1>
-      <button onClick={() => setCount((v) => v + 1)}>+</button>
+      <h1 ref={React.useCallback((ref: any) => console.log('ref', ref), [])}>{count}</h1>
+      <button ref={ref} onClick={() => setCount((v) => v + 1)}>
+        +
+      </button>
     </>
   )
 }

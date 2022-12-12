@@ -47,6 +47,30 @@ const updateMemo = (cb: any, deps: any[]): void => {
   return hook.memoizedState.res
 }
 
+const mountRef = (current: any): void => {
+  return mountMemo(() => ({ current }), [])
+}
+
+const updateRef = (current: any): void => {
+  return updateMemo(() => ({ current }), [])
+}
+
+const mountCallback = (cb: any, deps: any[]): void => {
+  return mountMemo(() => cb, deps)
+}
+
+const updateCallback = (cb: any, deps: any[]): void => {
+  return updateMemo(() => cb, deps)
+}
+
+const mountImperativeHandle = (ref: any, cb: any, deps: any[] = []): void => {
+  return mountMemo(() => void (ref.current = cb()), deps)
+}
+
+const updateImperativeHandle = (ref: any, cb: any, deps: any[] = []): void => {
+  return updateMemo(() => void (ref.current = cb()), deps)
+}
+
 const mountEffect = (cb: Function, deps?: any[]): void => {
   const nextDeps = deps === undefined ? null : deps
   if (isOnceEffect(nextDeps)) {
@@ -240,19 +264,35 @@ const updateWorkInProgressHook = (): Hook => {
 
 const basicStateReducer = (state: any, action: any): any => (typeof action === 'function' ? action(state) : action)
 
+const noop = () => {}
+
 const HookDispatcherOnMount = {
   useState: mountState,
   useReducer: mountReducer,
   useEffect: mountEffect,
-  useMemo: mountMemo,
   useLayoutEffect: mountLayoutEffect,
+  useMemo: mountMemo,
+  useRef: mountRef,
+  useCallback: mountCallback,
+  useImperativeHandle: mountImperativeHandle,
+  // TODO
+  useInsertionEffect: noop,
+  useTransition: noop,
+  useSyncExternalStore: noop,
 }
 const HookDispatcherOnUpdate = {
   useState: updateState,
   useReducer: updateReducer,
   useEffect: updateEffect,
-  useMemo: updateMemo,
   useLayoutEffect: updateLayoutEffect,
+  useMemo: updateMemo,
+  useRef: updateRef,
+  useCallback: updateCallback,
+  useImperativeHandle: updateImperativeHandle,
+  // TODO
+  useInsertionEffect: noop,
+  useTransition: noop,
+  useSyncExternalStore: noop,
 }
 
 const isChanged = (a: any[] | null | undefined, b: any[] | null | undefined): boolean => {
