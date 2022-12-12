@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { render } from '../src'
+import { createRoot, type HostConfig } from '../src'
 
 function App() {
   const [count, setCount] = React.useState(0)
@@ -12,7 +12,7 @@ function App() {
   React.useInsertionEffect(() => console.log('useInsertionEffect'), [])
   React.useInsertionEffect(() => console.log('useInsertionEffect with update'), [count])
   React.useTransition()
-  React.useSyncExternalStore(null, null)
+  React.useSyncExternalStore(null!, null!)
   React.useLayoutEffect(() => console.log('useLayoutEffect'), [])
   React.useLayoutEffect(() => console.log('useLayoutEffect with update'), [count])
   React.useEffect(() => console.log('useEffect'), [])
@@ -30,33 +30,6 @@ function App() {
 
 type Instance = HTMLElement
 type TextInstance = Text
-
-render<string, any, HTMLElement, Instance, Instance, TextInstance>(<App />, document.getElementById('root')!, {
-  createInstance(type, props) {
-    return applyProps(document.createElement(type), {}, props)
-  },
-  commitUpdate(instance, oldProps, newProps, fiber) {
-    applyProps(instance, oldProps, newProps)
-  },
-  createTextInstance(text) {
-    return document.createTextNode(text)
-  },
-  commitTextUpdate(textInstance, oldText, newText) {
-    textInstance.textContent = newText
-  },
-  getPublicInstance(instance) {
-    return instance
-  },
-  appendChild(parentInstance, childInstance) {
-    parentInstance.appendChild(childInstance)
-  },
-  insertBefore(parentInstance, child, beforeChild) {
-    parentInstance.insertBefore(child, beforeChild)
-  },
-  removeChild(parentInstance, childInstance) {
-    parentInstance.removeChild(childInstance)
-  },
-})
 
 function applyProps<T extends Instance>(instance: T, oldProps: any, newProps: any): T {
   for (const key in { ...oldProps, ...newProps }) {
@@ -86,3 +59,32 @@ function applyProps<T extends Instance>(instance: T, oldProps: any, newProps: an
 
   return instance
 }
+
+const config: HostConfig<string, any, HTMLElement, Instance, Instance, TextInstance> = {
+  createInstance(type, props) {
+    return applyProps(document.createElement(type), {}, props)
+  },
+  commitUpdate(instance, oldProps, newProps, fiber) {
+    applyProps(instance, oldProps, newProps)
+  },
+  createTextInstance(text) {
+    return document.createTextNode(text)
+  },
+  commitTextUpdate(textInstance, oldText, newText) {
+    textInstance.textContent = newText
+  },
+  getPublicInstance(instance) {
+    return instance
+  },
+  appendChild(parentInstance, childInstance) {
+    parentInstance.appendChild(childInstance)
+  },
+  insertBefore(parentInstance, child, beforeChild) {
+    parentInstance.insertBefore(child, beforeChild)
+  },
+  removeChild(parentInstance, childInstance) {
+    parentInstance.removeChild(childInstance)
+  },
+}
+
+createRoot(document.getElementById('root')!, config).render(<App />)

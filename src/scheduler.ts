@@ -1,8 +1,7 @@
 import { commitRoot } from './commit'
 import { beginWork } from './beginWork'
 import { HostRoot, ReactCurrentHostConfig } from './constants'
-import type { ReactElement } from 'react'
-import type { Fiber, HostConfig } from './types'
+import type { Fiber, HostConfig, Root } from './types'
 
 const workQueue: Function[] = []
 let pending: boolean = false
@@ -31,9 +30,7 @@ export const startTransition = (work: Function): void => {
 export const deletions: Fiber[] = []
 
 let workInProgress: Fiber | null = null
-let workInProgressRoot: Fiber | null = null
 let nextUnitOfWork: Fiber | null = null
-let currentRoot: Fiber | null = null
 
 export const scheduleUpdateOnFiber = (oldFiber: Fiber): void => {
   const newFiber = {
@@ -60,6 +57,9 @@ const performUnitOfWork = <P>(unitOfWorkFiber: Fiber<P>): Fiber<P> | null => {
   return null
 }
 
+const workInProgressRoots: Fiber[] = []
+const configs = new WeakMap<any, HostConfig<any, any, any, any, any, any>>()
+
 const bridge = (deadline: IdleDeadline): void => {
   while (nextUnitOfWork != null && deadline.timeRemaining() > 0) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
@@ -67,51 +67,53 @@ const bridge = (deadline: IdleDeadline): void => {
 
   if (nextUnitOfWork != null) return startTransition(bridge)
 
-  if (workInProgressRoot != null) {
-    commitRoot(workInProgressRoot, deletions)
-    currentRoot = workInProgressRoot
-    workInProgressRoot = null
-    workInProgress = null
-  }
   if (workInProgress != null) {
     commitRoot(workInProgress, deletions)
     workInProgress = null
-  }
-}
-
-const scheduleRoot = (rootFiber: Fiber): void => {
-  if (currentRoot?.alternate != null) {
-    workInProgressRoot = currentRoot.alternate
-    workInProgressRoot.alternate = currentRoot
-    if (rootFiber != null) workInProgressRoot.props = rootFiber.props
-  } else if (currentRoot != null) {
-    if (rootFiber != null) {
-      rootFiber.alternate = currentRoot
-      workInProgressRoot = rootFiber
-    } else {
-      workInProgressRoot = {
-        ...currentRoot,
-        alternate: currentRoot,
-      }
-    }
   } else {
-    workInProgressRoot = rootFiber
+    const workInProgressRoot = workInProgressRoots.shift()
+    if (workInProgressRoot == null) return
+
+    ReactCurrentHostConfig.current = configs.get(workInProgressRoot.stateNode)!
+    nextUnitOfWork = workInProgressRoot
+    workInProgress = workInProgressRoot
+
+    return startTransition(bridge)
   }
-  nextUnitOfWork = workInProgressRoot
 }
 
-export const render = <Type, Props, Container, PublicInstance, Instance, TextInstance>(
-  element: ReactElement,
+export function createRoot<Type, Props, Container, PublicInstance, Instance, TextInstance>(
   container: Container | null,
   config: HostConfig<Type, Props, Container, PublicInstance, Instance, TextInstance>,
-): void => {
-  const rootFiber: Fiber = {
-    tag: HostRoot,
-    stateNode: container,
-    props: { children: [element] },
+): Root {
+  configs.set(container, config)
+  let rootFiber: Fiber | null = null
+
+  return {
+    render(element) {
+      const currentRoot: Fiber = {
+        tag: HostRoot,
+        stateNode: container,
+        props: { children: [element] },
+      }
+
+      if (rootFiber?.alternate != null) {
+        const previousRoot = rootFiber.alternate
+        previousRoot.alternate = rootFiber
+        previousRoot.props = currentRoot.props
+        rootFiber = previousRoot
+      } else {
+        if (rootFiber != null) currentRoot.alternate = rootFiber
+        rootFiber = currentRoot
+      }
+
+      workInProgressRoots.push(rootFiber)
+      startTransition(bridge)
+    },
+    unmount() {
+      this.render(null)
+      configs.delete(container)
+      rootFiber = null
+    },
   }
-  ReactCurrentHostConfig.current = config
-  workInProgress = rootFiber
-  scheduleRoot(rootFiber)
-  startTransition(bridge)
 }

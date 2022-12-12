@@ -1,4 +1,4 @@
-import type { Key } from 'react'
+import type { Key, ReactNode } from 'react'
 
 export interface Queue {
   pending: null | Hook
@@ -36,6 +36,11 @@ export interface Fiber<P = any> {
   siblingNode?: any | null
   hook?: any
   effect?: Effect[] | null
+}
+
+export interface Root {
+  render(element: ReactNode): void
+  unmount(): void
 }
 
 export interface HostConfig<Type, Props, Container, PublicInstance, Instance, TextInstance> {
