@@ -1,8 +1,6 @@
 import {
   ReactCurrentHostConfig,
   DELETION,
-  HostComponent,
-  HostRoot,
   PLACEMENT,
   HostText,
   UPDATE,
@@ -14,30 +12,102 @@ import {
   LAYOUT,
 } from './constants'
 import { startTransition } from './scheduler'
+import type { MutableRefObject } from 'react'
 import type { Fiber } from './types'
 
-export const commitRoot = (workInProgressRoot: Fiber, deletions: Fiber[]): void => {
+function commitHookEffectList(currentFiber: Fiber, fiberTag?: any): void {
+  const effectList = currentFiber.effect
+  if (!effectList) return
+
+  for (const effect of effectList) {
+    if (effect.tag === NOEFFECT) continue
+    if (fiberTag === DELETION || effect.tag === EFFECT) {
+      const destroy = effect.destroy
+      effect.destroy = undefined
+      if (destroy !== undefined) {
+        destroy()
+      }
+      if (fiberTag === DELETION) effect.tag = NOEFFECT
+    }
+    if (effect.tag === EFFECTONCE) {
+      const create = effect.create
+      effect.destroy = create()
+      effect.tag = NOEFFECT
+    }
+    if (effect.tag === EFFECT) {
+      const create = effect.create
+      effect.destroy = create()
+    }
+  }
+}
+
+function commitHookLayoutEffectList(currentFiber: Fiber, fiberTag?: any): void {
+  const effectList = currentFiber.effect
+  if (!effectList) return
+
+  for (const effect of effectList) {
+    if (effect.tag === NOEFFECT) continue
+    if (fiberTag === DELETION || effect.tag === LAYOUT) {
+      const destroy = effect.destroy
+      effect.destroy = undefined
+      if (destroy !== undefined) {
+        destroy()
+      }
+      if (fiberTag === DELETION) effect.tag = NOEFFECT
+    }
+    if (effect.tag === LAYOUTONCE) {
+      const create = effect.create
+      effect.destroy = create()
+      effect.tag = NOEFFECT
+    }
+    if (effect.tag === LAYOUT) {
+      const create = effect.create
+      effect.destroy = create()
+    }
+  }
+}
+
+function handleSubRef(currentFiber: Fiber | undefined): void {
+  if (currentFiber == null) return
+  handleSubRef(currentFiber.child)
+  handleSubRef(currentFiber.sibling)
+  if (currentFiber.ref != null) {
+    typeof currentFiber.ref === 'function'
+      ? currentFiber.ref(null)
+      : ((currentFiber.ref as MutableRefObject<any>).current = null)
+    currentFiber.ref = null
+  }
+}
+function commitDeletion(currentFiber: Fiber, returnInstance: any): void {
+  if (currentFiber.stateNode != null) {
+    ReactCurrentHostConfig.current.removeChild(returnInstance, currentFiber.stateNode)
+  } else {
+    if (currentFiber.child != null) {
+      commitDeletion(currentFiber.child, returnInstance)
+    }
+  }
+  startTransition(() => commitHookEffectList(currentFiber, DELETION))
+  commitHookLayoutEffectList(currentFiber, DELETION)
+  handleSubRef(currentFiber)
+}
+
+export function commitRoot(workInProgressRoot: Fiber, deletions: Fiber[]): void {
   for (const fiber of deletions) commitWork(fiber)
   startTransition(() => commitHookEffectList(workInProgressRoot))
   commitHookLayoutEffectList(workInProgressRoot)
   commitWork(workInProgressRoot.child)
   deletions.length = 0
 }
-export const commitWork = (currentFiber: Fiber | null | undefined): void => {
+
+export function commitWork(currentFiber: Fiber | null | undefined): void {
   if (currentFiber == null) return
   const fiberTag = currentFiber.effectTag
   startTransition(() => commitHookEffectList(currentFiber, fiberTag))
   commitHookLayoutEffectList(currentFiber, fiberTag)
 
   let returnFiber = currentFiber.return
-  while (
-    returnFiber != null &&
-    returnFiber.tag !== HostText &&
-    returnFiber.tag !== HostRoot &&
-    returnFiber.tag !== HostComponent
-  ) {
-    returnFiber = returnFiber?.return
-  }
+  while (returnFiber?.tag === FunctionComponent) returnFiber = returnFiber?.return
+
   const returnInstance = returnFiber?.stateNode
   if (currentFiber.effectTag === PLACEMENT) {
     const nextFiber = currentFiber
@@ -96,79 +166,6 @@ export const commitWork = (currentFiber: Fiber | null | undefined): void => {
         : ReactCurrentHostConfig.current.getPublicInstance(currentFiber.stateNode as any)
     typeof currentFiber.ref === 'function'
       ? currentFiber.ref(publicInstance)
-      : (currentFiber.ref.current = publicInstance)
-  }
-}
-const commitDeletion = (currentFiber: Fiber, returnInstance: any): void => {
-  if (currentFiber.stateNode != null) {
-    ReactCurrentHostConfig.current.removeChild(returnInstance, currentFiber.stateNode)
-  } else {
-    if (currentFiber.child != null) {
-      commitDeletion(currentFiber.child, returnInstance)
-    }
-  }
-  startTransition(() => commitHookEffectList(currentFiber, DELETION))
-  commitHookLayoutEffectList(currentFiber, DELETION)
-  handleSubRef(currentFiber)
-}
-
-const handleSubRef = (currentFiber: Fiber | undefined): void => {
-  if (currentFiber == null) return
-  handleSubRef(currentFiber.child)
-  handleSubRef(currentFiber.sibling)
-  if (currentFiber.ref != null) {
-    typeof currentFiber.ref === 'function' ? currentFiber.ref(null) : (currentFiber.ref.current = null)
-    currentFiber.ref = null
-  }
-}
-const commitHookEffectList = (currentFiber: Fiber, fiberTag?: any): void => {
-  const effectList = currentFiber.effect
-  if (!effectList) return
-
-  for (const effect of effectList) {
-    if (effect.tag === NOEFFECT) continue
-    if (fiberTag === DELETION || effect.tag === EFFECT) {
-      const destroy = effect.destroy
-      effect.destroy = undefined
-      if (destroy !== undefined) {
-        destroy()
-      }
-      if (fiberTag === DELETION) effect.tag = NOEFFECT
-    }
-    if (effect.tag === EFFECTONCE) {
-      const create = effect.create
-      effect.destroy = create()
-      effect.tag = NOEFFECT
-    }
-    if (effect.tag === EFFECT) {
-      const create = effect.create
-      effect.destroy = create()
-    }
-  }
-}
-
-const commitHookLayoutEffectList = (currentFiber: Fiber, fiberTag?: any): void => {
-  const effectList = currentFiber.effect
-  if (!effectList) return
-
-  for (const effect of effectList) {
-    if (effect.tag === NOEFFECT) continue
-    if (fiberTag === DELETION || effect.tag === LAYOUT) {
-      const destroy = effect.destroy
-      effect.destroy = undefined
-      if (destroy !== undefined) {
-        destroy()
-      }
-      if (fiberTag === DELETION) effect.tag = NOEFFECT
-    }
-    if (effect.tag === LAYOUTONCE) {
-      const create = effect.create
-      effect.destroy = create()
-      effect.tag = NOEFFECT
-    }
-    if (effect.tag === LAYOUT) {
-      const create = effect.create
-      effect.destroy = create()
-    }
+      : ((currentFiber.ref as MutableRefObject<any>).current = publicInstance)
   }
 }

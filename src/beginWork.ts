@@ -3,17 +3,17 @@ import { reconcileChildFibers, mountChildFibers } from './reconciler'
 import { ReactCurrentHostConfig, FunctionComponent, HostComponent, HostRoot, HostText } from './constants'
 import type { Fiber } from './types'
 
-const updateFunctionComponent = (current: Fiber, workInProgress: Fiber, Component: any): void => {
+function updateFunctionComponent(current: Fiber, workInProgress: Fiber, Component: any): void {
   const newChildren = renderWithHooks(current, workInProgress, Component)
   reconcileChildFibers(current, workInProgress, newChildren)
 }
 
-const updateHostRoot = (current: Fiber | null, workInProgress: Fiber): void => {
+function updateHostRoot(current: Fiber | null, workInProgress: Fiber): void {
   const newChildren = workInProgress.props.children
   reconcileChildFibers(current, workInProgress, newChildren)
 }
 
-const updateHost = (current: Fiber | null, workInProgress: Fiber): void => {
+function updateHost(current: Fiber | null, workInProgress: Fiber): void {
   if (workInProgress.stateNode == null) {
     workInProgress.stateNode = ReactCurrentHostConfig.current.createInstance(
       workInProgress.type as string,
@@ -25,7 +25,7 @@ const updateHost = (current: Fiber | null, workInProgress: Fiber): void => {
   reconcileChildFibers(current, workInProgress, newChildren)
 }
 
-const updateHostText = (currentFiber: Fiber | null, workInProgress: Fiber): void => {
+function updateHostText(currentFiber: Fiber | null, workInProgress: Fiber): void {
   if (workInProgress.stateNode == null) {
     workInProgress.stateNode = ReactCurrentHostConfig.current.createTextInstance(
       workInProgress.props.text,
@@ -34,17 +34,17 @@ const updateHostText = (currentFiber: Fiber | null, workInProgress: Fiber): void
   }
 }
 
-const mountFunctionComponent = (current: Fiber | null, workInProgress: Fiber, Component: Function): void => {
+function mountFunctionComponent(current: Fiber | null, workInProgress: Fiber, Component: Function): void {
   const children = renderWithHooks(current, workInProgress, Component)
   workInProgress.tag = FunctionComponent
   mountChildFibers(current, workInProgress, children)
 }
-const mountHostRoot = (current: Fiber | null, workInProgress: Fiber): void => {
+function mountHostRoot(current: Fiber | null, workInProgress: Fiber): void {
   const newChildren = workInProgress.props.children
   mountChildFibers(current, workInProgress, newChildren)
 }
 
-const mountHost = (current: Fiber | null, workInProgress: Fiber): void => {
+function mountHost(current: Fiber | null, workInProgress: Fiber): void {
   if (workInProgress.stateNode == null) {
     workInProgress.stateNode = ReactCurrentHostConfig.current.createInstance(
       workInProgress.type as string,
@@ -56,7 +56,7 @@ const mountHost = (current: Fiber | null, workInProgress: Fiber): void => {
   mountChildFibers(current, workInProgress, newChildren)
 }
 
-const mountHostText = (currentFiber: Fiber | null, workInProgress: Fiber): void => {
+function mountHostText(currentFiber: Fiber | null, workInProgress: Fiber): void {
   if (workInProgress.stateNode == null) {
     workInProgress.stateNode = ReactCurrentHostConfig.current.createTextInstance(
       workInProgress.props.text,
@@ -65,7 +65,7 @@ const mountHostText = (currentFiber: Fiber | null, workInProgress: Fiber): void 
   }
 }
 
-export const beginWork = (current: Fiber, workInProgress: Fiber): void => {
+export function beginWork(current: Fiber, workInProgress: Fiber): void {
   if (current != null) {
     switch (workInProgress.tag) {
       case HostRoot:

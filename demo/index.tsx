@@ -4,6 +4,7 @@ import { createRoot, type HostConfig } from 'react-nylon'
 function App() {
   const [count, setCount] = React.useState(0)
   const ref = React.useRef<HTMLButtonElement>(null!)
+  React.useReducer((state: any, action: any) => state, {})
   React.useState(() => console.log('useState'))
   React.useMemo(() => console.log('useMemo'), [])
   React.useImperativeHandle(React.useRef(), () => void console.log('useImperativeHandle'))

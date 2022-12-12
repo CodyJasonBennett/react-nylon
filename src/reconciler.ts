@@ -68,8 +68,8 @@ function updateElement(wip: Fiber, oldFiber: Fiber, newChild: any): Fiber {
   return created
 }
 
-function placeChild(newFiber: Fiber, lastPlaceIndex: number, newIdx: number): number {
-  newFiber.index = newIdx
+function placeChild(newFiber: Fiber, lastPlaceIndex: number, newIndex: number): number {
+  newFiber.index = newIndex
 
   const current = newFiber.alternate
   if (current != null) {
@@ -85,11 +85,11 @@ function placeChild(newFiber: Fiber, lastPlaceIndex: number, newIdx: number): nu
     return lastPlaceIndex
   }
 }
-function updateFromMap(existingChildren: Map<any, any>, returnFiber: Fiber, newIdx: number, newChild: any): Fiber {
-  const matchedFiber = existingChildren.get(newChild.key ?? newIdx)
+function updateFromMap(existingChildren: Map<any, any>, returnFiber: Fiber, newIndex: number, newChild: any): Fiber {
+  const matchedFiber = existingChildren.get(newChild.key ?? newIndex)
   return updateElement(returnFiber, matchedFiber, newChild)
 }
-function updateSlot(wip: Fiber, oldFiber: Fiber, newChild: Fiber): Fiber | null {
+function updateSlot(wip: Fiber, oldFiber: Fiber, newChild: any): Fiber | null {
   const key = oldFiber != null ? oldFiber.key : null
   if (newChild.key === key) {
     return updateElement(wip, oldFiber, newChild)
@@ -125,22 +125,22 @@ function functionComponentNodeTag(wip: Fiber): void {
     current = current.sibling
   }
 }
-function reconcileChildrenArray(current: Fiber | null | undefined, wip: Fiber, newChilds: any[]): Fiber | null {
+function reconcileChildrenArray(current: Fiber | null | undefined, wip: Fiber, newChildren: any[]): Fiber | null {
   let resultingFirstChild: any = null
   let previousNewFiber = null
   let oldChildFiber: any = current?.child
   let nextOldFiber = null
-  let newIdx = 0
+  let newIndex = 0
   let lastPlaceIndex = 0
 
-  for (; oldChildFiber != null && newIdx < newChilds.length; newIdx++) {
+  for (; oldChildFiber != null && newIndex < newChildren.length; newIndex++) {
     nextOldFiber = oldChildFiber.sibling
-    const newFiber = updateSlot(wip, oldChildFiber, newChilds[newIdx])
+    const newFiber = updateSlot(wip, oldChildFiber, newChildren[newIndex])
     if (newFiber == null) break
     if (newFiber.alternate == null) {
       deleteChild(wip.child, oldChildFiber)
     }
-    lastPlaceIndex = placeChild(newFiber, lastPlaceIndex, newIdx)
+    lastPlaceIndex = placeChild(newFiber, lastPlaceIndex, newIndex)
     if (previousNewFiber == null) {
       resultingFirstChild = newFiber
     } else {
@@ -150,7 +150,7 @@ function reconcileChildrenArray(current: Fiber | null | undefined, wip: Fiber, n
     oldChildFiber = nextOldFiber
   }
 
-  if (newIdx === newChilds.length) {
+  if (newIndex === newChildren.length) {
     deleteRemainingChildren(wip, oldChildFiber)
     functionComponentNodeTag(resultingFirstChild)
     wip.child = resultingFirstChild!
@@ -158,9 +158,9 @@ function reconcileChildrenArray(current: Fiber | null | undefined, wip: Fiber, n
   }
 
   if (oldChildFiber == null) {
-    for (; newIdx < newChilds.length; newIdx++) {
-      const newFiber = createChild(wip, newChilds[newIdx])
-      lastPlaceIndex = placeChild(newFiber, lastPlaceIndex, newIdx)
+    for (; newIndex < newChildren.length; newIndex++) {
+      const newFiber = createChild(wip, newChildren[newIndex])
+      lastPlaceIndex = placeChild(newFiber, lastPlaceIndex, newIndex)
       newFiber.effectTag = PLACEMENT
       if (previousNewFiber == null) {
         resultingFirstChild = newFiber
@@ -176,13 +176,13 @@ function reconcileChildrenArray(current: Fiber | null | undefined, wip: Fiber, n
   }
 
   const existingChildren = mapRemainingChildren(wip, oldChildFiber)
-  for (; newIdx < newChilds.length; newIdx++) {
-    const newFiber = updateFromMap(existingChildren, wip, newIdx, newChilds[newIdx])
+  for (; newIndex < newChildren.length; newIndex++) {
+    const newFiber = updateFromMap(existingChildren, wip, newIndex, newChildren[newIndex])
 
     if (newFiber.alternate != null) {
-      existingChildren.delete(newFiber.key ?? newIdx)
+      existingChildren.delete(newFiber.key ?? newIndex)
     }
-    lastPlaceIndex = placeChild(newFiber, lastPlaceIndex, newIdx)
+    lastPlaceIndex = placeChild(newFiber, lastPlaceIndex, newIndex)
     if (previousNewFiber == null) {
       resultingFirstChild = newFiber
     } else {

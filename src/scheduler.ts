@@ -22,7 +22,7 @@ function flushQueue(deadline: IdleDeadline): void {
   else pending = false
 }
 
-export const startTransition = (work: Function): void => {
+export function startTransition(work: Function): void {
   workQueue.push(work)
   if (!pending) requestIdleCallback(flushQueue)
 }
@@ -32,7 +32,7 @@ export const deletions: Fiber[] = []
 let workInProgress: Fiber | null = null
 let nextUnitOfWork: Fiber | null = null
 
-export const scheduleUpdateOnFiber = (oldFiber: Fiber): void => {
+export function scheduleUpdateOnFiber(oldFiber: Fiber): void {
   const newFiber = {
     ...oldFiber,
     alternate: oldFiber,
@@ -42,7 +42,7 @@ export const scheduleUpdateOnFiber = (oldFiber: Fiber): void => {
   startTransition(bridge)
 }
 
-const performUnitOfWork = <P>(unitOfWorkFiber: Fiber<P>): Fiber<P> | null => {
+function performUnitOfWork<P>(unitOfWorkFiber: Fiber<P>): Fiber<P> | null {
   beginWork(unitOfWorkFiber.alternate!, unitOfWorkFiber)
   if (unitOfWorkFiber.child != null) {
     return unitOfWorkFiber.child
@@ -60,7 +60,7 @@ const performUnitOfWork = <P>(unitOfWorkFiber: Fiber<P>): Fiber<P> | null => {
 const workInProgressRoots: Fiber[] = []
 const configs = new WeakMap<any, HostConfig<any, any, any, any, any, any>>()
 
-const bridge = (deadline: IdleDeadline): void => {
+function bridge(deadline: IdleDeadline): void {
   while (nextUnitOfWork != null && deadline.timeRemaining() > 0) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
   }

@@ -1,20 +1,20 @@
-import type { Key, ReactNode } from 'react'
+import type { Reducer, Key, Ref, ReactNode } from 'react'
 
 export interface Queue {
-  pending: null | Hook
-  lastRenderedReducer?: any
-  lastRenderedState?: any
+  pending: Hook | null
+  lastRenderedReducer: Reducer<any, any>
+  lastRenderedState: any
 }
 
 export interface Effect {
-  tag: any
-  create: any
-  destroy: any
-  deps: null | any[]
+  tag: number
+  create: Function
+  destroy: Function | undefined
+  deps: any[] | null
 }
 
 export interface Hook {
-  action: any
+  action?: any
   memoizedState: any
   queue: Queue | null
   next: Hook | null
@@ -22,7 +22,7 @@ export interface Hook {
 
 export interface Fiber<P = any> {
   key?: Key
-  ref?: any
+  ref?: Ref<any>
   index?: number
   type?: string | symbol | Function
   tag: number
@@ -32,9 +32,9 @@ export interface Fiber<P = any> {
   child?: Fiber<P>
   alternate?: Fiber<P>
   effectTag?: number | null
-  stateNode?: any | null
-  siblingNode?: any | null
-  hook?: any
+  stateNode?: P | null
+  siblingNode?: P | null
+  hook?: Hook
   effect?: Effect[] | null
 }
 
