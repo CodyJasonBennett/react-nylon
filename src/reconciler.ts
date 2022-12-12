@@ -1,11 +1,9 @@
 import { FunctionComponent, HostComponent, HostText, DELETION, PLACEMENT, UPDATE } from './constants'
 import { deletions } from './scheduler'
-import type { ReactElement } from 'react'
 import type { Fiber } from './types'
 
-function createFiberFromElement(element: ReactElement): Fiber {
-  let type = element.type
-  let props = element.props
+function createFiberFromElement(element: any): Fiber {
+  let { type, props, ref, key } = element
   let tag
 
   if (typeof element === 'string' || typeof element === 'number') {
@@ -22,8 +20,8 @@ function createFiberFromElement(element: ReactElement): Fiber {
     type,
     tag,
     props,
-    ref: props?.ref,
-    key: props?.key,
+    ref,
+    key,
   }
 }
 
