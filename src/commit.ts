@@ -126,6 +126,7 @@ const commitHookEffectList = (currentFiber: Fiber, fiberTag?: any): void => {
   if (!effectList) return
 
   for (const effect of effectList) {
+    if (effect.tag === NOEFFECT) continue
     if (fiberTag === DELETION || effect.tag === EFFECT) {
       const destroy = effect.destroy
       effect.destroy = undefined
@@ -151,7 +152,7 @@ const commitHookLayoutEffectList = (currentFiber: Fiber, fiberTag?: any): void =
   if (!effectList) return
 
   for (const effect of effectList) {
-    if (effect.tag === NOEFFECT) return
+    if (effect.tag === NOEFFECT) continue
     if (fiberTag === DELETION || effect.tag === LAYOUT) {
       const destroy = effect.destroy
       effect.destroy = undefined
