@@ -81,9 +81,13 @@ function handleSubRef(currentFiber: Fiber | undefined): void {
 function commitDeletion(currentFiber: Fiber, returnInstance: any): void {
   if (currentFiber.stateNode != null) {
     ReactCurrentHostConfig.current.removeChild(returnInstance, currentFiber.stateNode)
-  } else {
-    if (currentFiber.child != null) {
-      commitDeletion(currentFiber.child, returnInstance)
+  } else if (currentFiber.child != null) {
+    commitDeletion(currentFiber.child, returnInstance)
+
+    let sibling: Fiber | undefined = currentFiber.child.sibling
+    while (sibling != null) {
+      commitDeletion(sibling, returnInstance)
+      sibling = sibling.sibling
     }
   }
   startTransition(() => commitHookEffectList(currentFiber, DELETION))
