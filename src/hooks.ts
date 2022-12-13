@@ -1,6 +1,6 @@
 import { ReactCurrentDispatcher, EFFECT, LAYOUT, NOEFFECT, EFFECTONCE, LAYOUTONCE } from './constants'
 import { scheduleUpdateOnFiber } from './scheduler'
-import type { MutableRefObject, ReactNode } from 'react'
+import type * as React from 'react'
 import type { Fiber, Hook, Queue, Effect } from './types'
 
 let currentlyRenderingFiber: Fiber | null = null
@@ -107,10 +107,10 @@ function updateCallback(cb: Function, deps: any[]): void {
   return updateMemo(() => cb, deps)
 }
 
-function mountImperativeHandle(ref: MutableRefObject<any>, cb: Function, deps: any[] = []): void {
+function mountImperativeHandle(ref: React.MutableRefObject<any>, cb: Function, deps: any[] = []): void {
   return mountMemo(() => void (ref.current = cb()), deps)
 }
-function updateImperativeHandle(ref: MutableRefObject<any>, cb: Function, deps: any[] = []): void {
+function updateImperativeHandle(ref: React.MutableRefObject<any>, cb: Function, deps: any[] = []): void {
   return updateMemo(() => void (ref.current = cb()), deps)
 }
 
@@ -255,7 +255,7 @@ const HookDispatcherOnUpdate = {
   useSyncExternalStore: noop,
 }
 
-export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Component: symbol | Function): ReactNode {
+export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Component: Function): any {
   currentlyRenderingFiber = workInProgress
 
   if (current != null) {
@@ -264,8 +264,7 @@ export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Co
     ReactCurrentDispatcher.current = HookDispatcherOnMount
   }
 
-  let children = currentlyRenderingFiber.props.children
-  if (typeof Component === 'function') children = Component(currentlyRenderingFiber.props)
+  const children = Component(currentlyRenderingFiber.props)
 
   currentlyRenderingFiber = null
   workInProgressHook = null

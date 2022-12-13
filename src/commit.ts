@@ -12,7 +12,7 @@ import {
   LAYOUT,
 } from './constants'
 import { startTransition } from './scheduler'
-import type { MutableRefObject } from 'react'
+import type * as React from 'react'
 import type { Fiber } from './types'
 
 function commitHookEffectList(currentFiber: Fiber, fiberTag?: any): void {
@@ -74,7 +74,7 @@ function handleSubRef(currentFiber: Fiber | undefined): void {
   if (currentFiber.ref != null) {
     typeof currentFiber.ref === 'function'
       ? currentFiber.ref(null)
-      : ((currentFiber.ref as MutableRefObject<any>).current = null)
+      : ((currentFiber.ref as React.MutableRefObject<any>).current = null)
     currentFiber.ref = null
   }
 }
@@ -170,6 +170,6 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
         : ReactCurrentHostConfig.current.getPublicInstance(currentFiber.stateNode as any)
     typeof currentFiber.ref === 'function'
       ? currentFiber.ref(publicInstance)
-      : ((currentFiber.ref as MutableRefObject<any>).current = publicInstance)
+      : ((currentFiber.ref as React.MutableRefObject<any>).current = publicInstance)
   }
 }

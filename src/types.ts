@@ -1,8 +1,8 @@
-import type { Reducer, Key, Ref, ReactNode } from 'react'
+import type * as React from 'react'
 
 export interface Queue {
   pending: Hook | null
-  lastRenderedReducer: Reducer<any, any>
+  lastRenderedReducer: React.Reducer<any, any>
   lastRenderedState: any
 }
 
@@ -21,8 +21,8 @@ export interface Hook {
 }
 
 export interface Fiber<P = any> {
-  key?: Key
-  ref?: Ref<any>
+  key?: React.Key
+  ref?: React.Ref<any>
   index?: number
   type?: string | symbol | Function
   tag: number
@@ -39,7 +39,7 @@ export interface Fiber<P = any> {
 }
 
 export interface Root {
-  render(element: ReactNode): void
+  render(element: React.ReactNode): void
   unmount(): void
 }
 
