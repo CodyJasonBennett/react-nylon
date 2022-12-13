@@ -200,7 +200,7 @@ function mountReducer(reducer: any, initialArg: any): any {
   const dispatch = dispatchAction.bind(null, currentlyRenderingFiber!, queue)
   return [queue.lastRenderedState, dispatch]
 }
-function updateReducer(reducer: any, initialArg: any): any {
+function updateReducer(reducer: any, _initialArg: any): any {
   const hook = updateWorkInProgressHook()
   const queue = hook.queue
   const current = currentHook
@@ -224,35 +224,75 @@ function updateReducer(reducer: any, initialArg: any): any {
   return [queue?.lastRenderedState, dispatch]
 }
 
-const noop = () => {}
-
 const HookDispatcherOnMount = {
-  useState: mountState,
-  useReducer: mountReducer,
-  useEffect: mountEffect,
-  useLayoutEffect: mountLayoutEffect,
-  useMemo: mountMemo,
-  useRef: mountRef,
-  useCallback: mountCallback,
-  useImperativeHandle: mountImperativeHandle,
-  // TODO
-  useInsertionEffect: noop,
-  useTransition: noop,
-  useSyncExternalStore: noop,
+  readContext(_context: any): any {},
+  useCallback(callback: any, deps: any): any {
+    return mountCallback(callback, deps)
+  },
+  useContext(_context: any): any {},
+  useDebugValue(_value: any, _formatterFn: any): any {},
+  useDeferredValue(_value: any): any {},
+  useEffect(create: any, deps: any): any {
+    return mountEffect(create, deps)
+  },
+  useId(): any {},
+  useImperativeHandle(ref: any, create: any, deps: any): any {
+    return mountImperativeHandle(ref, create, deps)
+  },
+  useInsertionEffect(_create: any, _deps: any): any {},
+  useLayoutEffect(create: any, deps: any): any {
+    return mountLayoutEffect(create, deps)
+  },
+  useMemo(create: any, deps: any): any {
+    return mountMemo(create, deps)
+  },
+  useMutableSource(_source: any, _getSnapshot: any, _subscribe: any): any {},
+  useReducer(reducer: any, initialArg: any): any {
+    return mountReducer(reducer, initialArg)
+  },
+  useRef(initialValue: any): any {
+    return mountRef(initialValue)
+  },
+  useState(initialState: any): any {
+    return mountState(initialState)
+  },
+  useSyncExternalStore(_subscribe: any, _getSnapshot: any, _getServerSnapshot: any): any {},
+  useTransition(): any {},
 }
 const HookDispatcherOnUpdate = {
-  useState: updateState,
-  useReducer: updateReducer,
-  useEffect: updateEffect,
-  useLayoutEffect: updateLayoutEffect,
-  useMemo: updateMemo,
-  useRef: updateRef,
-  useCallback: updateCallback,
-  useImperativeHandle: updateImperativeHandle,
-  // TODO
-  useInsertionEffect: noop,
-  useTransition: noop,
-  useSyncExternalStore: noop,
+  readContext(_context: any): any {},
+  useCallback(callback: any, deps: any): any {
+    return updateCallback(callback, deps)
+  },
+  useContext(_context: any): any {},
+  useDebugValue(_value: any, _formatterFn: any): any {},
+  useDeferredValue(_value: any): any {},
+  useEffect(create: any, deps: any): any {
+    return updateEffect(create, deps)
+  },
+  useId(): any {},
+  useImperativeHandle(ref: any, create: any, deps: any): any {
+    return updateImperativeHandle(ref, create, deps)
+  },
+  useInsertionEffect(_create: any, _deps: any): any {},
+  useLayoutEffect(create: any, deps: any): any {
+    return updateLayoutEffect(create, deps)
+  },
+  useMemo(create: any, deps: any): any {
+    return updateMemo(create, deps)
+  },
+  useMutableSource(_source: any, _getSnapshot: any, _subscribe: any): any {},
+  useReducer(reducer: any, initialArg: any): any {
+    return updateReducer(reducer, initialArg)
+  },
+  useRef(initialValue: any): any {
+    return updateRef(initialValue)
+  },
+  useState(initialState: any): any {
+    return updateState(initialState)
+  },
+  useSyncExternalStore(_subscribe: any, _getSnapshot: any, _getServerSnapshot: any): any {},
+  useTransition(): any {},
 }
 
 export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Component: Function): any {
