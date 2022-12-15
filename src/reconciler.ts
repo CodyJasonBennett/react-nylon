@@ -137,9 +137,7 @@ function reconcileChildrenArray(current: Fiber | null | undefined, wip: Fiber, n
 
   for (; oldChildFiber != null && newIndex < newChildren.length; newIndex++) {
     nextOldFiber = oldChildFiber.sibling
-    const newChild = newChildren[newIndex]
-    if (newChild == null) continue
-    const newFiber = updateSlot(wip, oldChildFiber, newChild)
+    const newFiber = updateSlot(wip, oldChildFiber, newChildren[newIndex])
     if (newFiber == null) break
     if (newFiber.alternate == null) {
       deleteChild(wip.child, oldChildFiber)
@@ -163,9 +161,7 @@ function reconcileChildrenArray(current: Fiber | null | undefined, wip: Fiber, n
 
   if (oldChildFiber == null) {
     for (; newIndex < newChildren.length; newIndex++) {
-      const newChild = newChildren[newIndex]
-      if (newChild == null) continue
-      const newFiber = createChild(wip, newChild)
+      const newFiber = createChild(wip, newChildren[newIndex])
       lastPlaceIndex = placeChild(newFiber, lastPlaceIndex, newIndex)
       newFiber.effectTag = PLACEMENT
       if (previousNewFiber == null) {
@@ -183,10 +179,7 @@ function reconcileChildrenArray(current: Fiber | null | undefined, wip: Fiber, n
 
   const existingChildren = mapRemainingChildren(wip, oldChildFiber)
   for (; newIndex < newChildren.length; newIndex++) {
-    const newChild = newChildren[newIndex]
-    if (newChild == null) continue
-    const newFiber = updateFromMap(existingChildren, wip, newIndex, newChild)
-
+    const newFiber = updateFromMap(existingChildren, wip, newIndex, newChildren[newIndex])
     if (newFiber.alternate != null) {
       existingChildren.delete(newFiber.key ?? newIndex)
     }
