@@ -219,7 +219,7 @@ function updateReducer(reducer: any, initialArg: any, initializer?: any): any {
 
 function readContext<T>(context: React.Context<T>): T {
   let contextFiber = currentlyRenderingFiber!.return
-  while (contextFiber && (contextFiber.type as any).$$typeof !== Symbol.for('react.provider')) {
+  while (contextFiber && contextFiber.type !== Symbol.for('react.provider')) {
     contextFiber = contextFiber.return
   }
 
