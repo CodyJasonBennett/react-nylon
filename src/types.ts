@@ -10,7 +10,7 @@ export interface Effect {
   tag: number
   create: Function
   destroy: Function | undefined
-  deps: any[] | null
+  deps: React.DependencyList | null
 }
 
 export interface Hook {

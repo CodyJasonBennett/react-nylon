@@ -2,8 +2,6 @@ import { FunctionComponent, HostComponent, HostText, DELETION, PLACEMENT, UPDATE
 import { deletions } from './scheduler'
 import type { Fiber } from './types'
 
-const noop = (props: any) => props.children
-
 function createFiberFromElement(element: any): Fiber {
   let { type, props, ref, key } = element
   let tag
@@ -15,7 +13,6 @@ function createFiberFromElement(element: any): Fiber {
   } else if (typeof type === 'string') {
     tag = HostComponent
   } else {
-    if (typeof type === 'symbol') type = noop
     tag = FunctionComponent
   }
 
