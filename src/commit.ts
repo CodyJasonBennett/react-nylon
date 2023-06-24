@@ -83,7 +83,7 @@ function commitDeletion(currentFiber: Fiber, returnFiber?: Fiber): void {
   const returnInstance = returnFiber?.stateNode
   const isContainer = returnInstance && !returnFiber?.return
 
-  if (currentFiber.stateNode != null) {
+  if (currentFiber.stateNode != null && currentFiber.tag !== FunctionComponent) {
     if (isContainer) {
       ReactCurrentHostConfig.current.removeChildFromContainer!(returnInstance, currentFiber.stateNode)
     } else {
@@ -123,7 +123,7 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
   const returnInstance = returnFiber?.stateNode
   const isContainer = returnInstance && !returnFiber?.return
   if (currentFiber.effectTag === PLACEMENT) {
-    if (currentFiber.stateNode != null) {
+    if (currentFiber.stateNode != null && currentFiber.tag !== FunctionComponent) {
       if (currentFiber.return?.tag === FunctionComponent && currentFiber.return?.siblingNode != null) {
         if (isContainer) {
           ReactCurrentHostConfig.current.insertInContainerBefore!(
@@ -142,7 +142,7 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
         let nextInstance = null
         let sibling = currentFiber.sibling
         while (sibling != null && nextInstance == null) {
-          if (sibling.stateNode != null && sibling.effectTag !== PLACEMENT) {
+          if (sibling.stateNode != null && sibling.tag !== FunctionComponent && sibling.effectTag !== PLACEMENT) {
             nextInstance = sibling.stateNode
             break
           }

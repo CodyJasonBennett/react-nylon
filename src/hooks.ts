@@ -1,6 +1,6 @@
 import { ReactCurrentDispatcher, EFFECT, LAYOUT, NOEFFECT, EFFECTONCE, LAYOUTONCE } from './constants'
 import { scheduleUpdateOnFiber, startTransition } from './scheduler'
-import type * as React from 'react'
+import * as React from 'react'
 import type { Fiber, Hook, Queue, Effect } from './types'
 
 let mounted: boolean = false
@@ -337,7 +337,15 @@ export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Co
   mounted = current != null
 
   let children: any = currentlyRenderingFiber.props.children
-  if (typeof Component === 'function') children = Component(currentlyRenderingFiber.props)
+  if (typeof Component === 'function') {
+    children = new Component(currentlyRenderingFiber.props)
+    if (children instanceof React.Component) {
+      currentlyRenderingFiber.stateNode ??= children
+      // @ts-ignore
+      children.props = currentlyRenderingFiber.props
+      children = children.render()
+    }
+  }
 
   currentlyRenderingFiber = null
   ReactCurrentDispatcher.current = null
