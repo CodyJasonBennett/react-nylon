@@ -58,7 +58,7 @@ function performUnitOfWork<P>(unitOfWorkFiber: Fiber<P>): Fiber<P> | null {
 }
 
 const workInProgressRoots: Fiber[] = []
-const configs = new WeakMap<any, HostConfig<any, any, any, any, any, any>>()
+const configs = new WeakMap<any, HostConfig<any, any, any, any, any, any, any, any>>()
 
 function bridge(deadline: IdleDeadline): void {
   while (nextUnitOfWork != null && deadline.timeRemaining() > 0) {
@@ -83,9 +83,9 @@ function bridge(deadline: IdleDeadline): void {
   }
 }
 
-export function createRoot<Type, Props, Container, PublicInstance, Instance, TextInstance>(
+export function createRoot<Type, Props, Container, Instance, TextInstance, PublicInstance, HostContext, UpdatePayload>(
   container: Container | null,
-  config: HostConfig<Type, Props, Container, PublicInstance, Instance, TextInstance>,
+  config: HostConfig<Type, Props, Container, Instance, TextInstance, PublicInstance, HostContext, UpdatePayload>,
 ): Root {
   configs.set(container, config)
   let rootFiber: Fiber | null = null
