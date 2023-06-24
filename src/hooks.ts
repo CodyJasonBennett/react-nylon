@@ -330,6 +330,9 @@ const HookDispatcher = {
   useTransition,
 }
 
+const isReactComponent = (type: any): type is new (...args: any[]) => React.Component =>
+  type.prototype?.isReactComponent
+
 export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Component: any): any {
   currentlyRenderingFiber = workInProgress
   ReactCurrentDispatcher.current = HookDispatcher
@@ -338,12 +341,14 @@ export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Co
 
   let children: any = currentlyRenderingFiber.props.children
   if (typeof Component === 'function') {
-    children = new Component(currentlyRenderingFiber.props, currentlyRenderingFiber.ref)
-    if (children instanceof React.Component) {
-      currentlyRenderingFiber.stateNode ??= children
+    if (isReactComponent(Component)) {
+      const instance = new Component(currentlyRenderingFiber.props)
+      currentlyRenderingFiber.stateNode ??= instance
       // @ts-ignore
-      children.props = currentlyRenderingFiber.props
-      children = children.render()
+      instance.props = currentlyRenderingFiber.props
+      children = instance.render()
+    } else {
+      children = Component(currentlyRenderingFiber.props, currentlyRenderingFiber.ref)
     }
   }
 
