@@ -1,7 +1,15 @@
 import { commitRoot } from './commit'
-import { beginWork } from './beginWork'
-import { HostRoot, ReactCurrentRoot, ReactCurrentHostConfig } from './constants'
+import {
+  ReactCurrentRoot,
+  ReactCurrentHostConfig,
+  FunctionComponent,
+  HostComponent,
+  HostText,
+  HostRoot,
+} from './constants'
 import type { Fiber, HostConfig, Root } from './types'
+import { renderWithHooks } from './hooks'
+import { mountChildFibers, reconcileChildFibers } from './reconciler'
 
 const workQueue: Function[] = []
 let pending: boolean = false
@@ -41,6 +49,33 @@ export function scheduleUpdateOnFiber(oldFiber: Fiber): void {
 
     bridge(deadline)
   })
+}
+
+function beginWork(current: Fiber | null, workInProgress: Fiber): void {
+  if (workInProgress.tag === HostComponent) {
+    workInProgress.stateNode ??= ReactCurrentHostConfig.current.createInstance(
+      workInProgress.type as string,
+      workInProgress.props,
+      ReactCurrentRoot.current.stateNode,
+      null,
+      workInProgress,
+    )
+  } else if (workInProgress.tag === HostText) {
+    workInProgress.stateNode ??= ReactCurrentHostConfig.current.createTextInstance(
+      workInProgress.props.text,
+      ReactCurrentRoot.current.stateNode,
+      null,
+      workInProgress,
+    )
+  }
+
+  const children =
+    workInProgress.tag === FunctionComponent
+      ? renderWithHooks(current, workInProgress, workInProgress.type as Function)
+      : workInProgress.props.children
+
+  if (current == null) mountChildFibers(current, workInProgress, children)
+  else reconcileChildFibers(current, workInProgress, children)
 }
 
 function performUnitOfWork<P>(unitOfWorkFiber: Fiber<P>): Fiber<P> | null {
