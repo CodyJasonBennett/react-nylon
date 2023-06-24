@@ -205,7 +205,7 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
           ReactCurrentRoot.current.stateNode,
           null,
         )
-        if (updatePayload != null) {
+        if (updatePayload !== null) {
           ReactCurrentHostConfig.current.commitUpdate!(
             currentFiber.stateNode as any,
             updatePayload,

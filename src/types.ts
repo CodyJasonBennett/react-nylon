@@ -43,10 +43,16 @@ export interface Root {
   unmount(): void
 }
 
-type HostContext = null
-type UpdatePayload = null
-
-export interface HostConfig<Type, Props, Container, PublicInstance, Instance, TextInstance> {
+export interface HostConfig<
+  Type,
+  Props,
+  Container,
+  Instance,
+  TextInstance,
+  PublicInstance,
+  HostContext,
+  UpdatePayload,
+> {
   createInstance(
     type: Type,
     props: Props,

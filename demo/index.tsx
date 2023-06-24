@@ -1,10 +1,16 @@
 import * as React from 'react'
 import { createRoot, type HostConfig } from 'react-nylon'
 
+type Type = string
+type Props = Record<string, any>
+type Container = HTMLElement
 type Instance = HTMLElement
 type TextInstance = Text
+type PublicInstance = Instance
+type HostContext = null
+type UpdatePayload = void
 
-function applyProps<T extends Instance>(instance: T, oldProps: any, newProps: any): T {
+function applyProps<T extends Instance>(instance: T, oldProps: Props, newProps: Props): T {
   for (const key in { ...oldProps, ...newProps }) {
     const oldValue = oldProps[key]
     const newValue = newProps[key]
@@ -31,7 +37,7 @@ function applyProps<T extends Instance>(instance: T, oldProps: any, newProps: an
   return instance
 }
 
-const config: HostConfig<string, any, HTMLElement, Instance, Instance, TextInstance> = {
+const config: HostConfig<Type, Props, Container, Instance, TextInstance, PublicInstance, HostContext, UpdatePayload> = {
   createInstance(type, props) {
     return applyProps(document.createElement(type), {}, props)
   },
@@ -65,9 +71,7 @@ const config: HostConfig<string, any, HTMLElement, Instance, Instance, TextInsta
   removeChildFromContainer(container, child) {
     container.removeChild(child)
   },
-  prepareUpdate(instance, type, oldProps, newProps, rootContainer, hostContext) {
-    return null
-  },
+  prepareUpdate(instance, type, oldProps, newProps, rootContainer, hostContext) {},
   commitUpdate(instance, updatePayload, type, prevProps, nextProps, internalHandle) {
     applyProps(instance, prevProps, nextProps)
   },
