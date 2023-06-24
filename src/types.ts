@@ -43,13 +43,77 @@ export interface Root {
   unmount(): void
 }
 
+type HostContext = null
+type UpdatePayload = null
+
 export interface HostConfig<Type, Props, Container, PublicInstance, Instance, TextInstance> {
-  createInstance(type: Type, props: Props, fiber: Fiber): Instance
-  commitUpdate(instance: Instance, oldProps: Props, newProps: Props, fiber: Fiber): void
-  createTextInstance(text: string, fiber: Fiber): TextInstance
-  commitTextUpdate(textInstance: TextInstance, oldText: string, newText: string, fiber: Fiber): void
+  createInstance(
+    type: Type,
+    props: Props,
+    rootContainer: Container,
+    hostContext: HostContext,
+    internalHandle: Fiber,
+  ): Instance
+  createTextInstance(
+    text: string,
+    rootContainer: Container,
+    hostContext: HostContext,
+    internalHandle: Fiber,
+  ): TextInstance
+  appendInitialChild(parent: Instance, child: Instance | TextInstance): void
+  finalizeInitialChildren(
+    instance: Instance,
+    type: Type,
+    props: Props,
+    rootContainer: Container,
+    hostContext: HostContext,
+  ): boolean
+  prepareUpdate(
+    instance: Instance,
+    type: Type,
+    oldProps: Props,
+    newProps: Props,
+    rootContainer: Container,
+    hostContext: HostContext,
+  ): UpdatePayload | null
+  shouldSetTextContent(type: Type, props: Props): boolean
+  getRootHostContext(rootContainer: Container): HostContext | null
+  getChildHostContext(parentHostContext: HostContext, type: Type, rootContainer: Container): HostContext
   getPublicInstance(instance: Instance): PublicInstance
-  appendChild(parentInstance: Instance, childInstance: Instance | TextInstance): void
-  insertBefore(parentInstance: Instance, child: Instance | TextInstance, beforeChild: Instance | TextInstance): void
-  removeChild(parentInstance: Instance, childInstance: Instance | TextInstance): void
+  prepareForCommit(containerInfo: Container): Record<string, any> | null
+  resetAfterCommit(containerInfo: Container): void
+  preparePortalMount(containerInfo: Container): void
+  appendChild?(parent: Instance, child: Instance | TextInstance): void
+  appendChildToContainer?(container: Container, child: Instance | TextInstance): void
+  insertBefore?(parent: Instance, child: Instance | TextInstance, beforeChild: Instance | TextInstance): void
+  insertInContainerBefore?(
+    container: Container,
+    child: Instance | TextInstance,
+    beforeChild: Instance | TextInstance,
+  ): void
+  removeChild?(parent: Instance, child: Instance | TextInstance): void
+  removeChildFromContainer?(container: Container, child: Instance | TextInstance): void
+  resetTextContent?(instance: Instance): void
+  commitTextUpdate?(textInstance: TextInstance, oldText: string, newText: string): void
+  commitMount?(instance: Instance, type: Type, props: Props, internalHandle: Fiber): void
+  commitUpdate?(
+    instance: Instance,
+    updatePayload: UpdatePayload,
+    type: Type,
+    prevProps: Props,
+    nextProps: Props,
+    internalHandle: Fiber,
+  ): void
+  hideInstance?(instance: Instance): void
+  hideTextInstance?(textInstance: TextInstance): void
+  unhideInstance?(instance: Instance, props: Props): void
+  unhideTextInstance?(textInstance: TextInstance, text: string): void
+  clearContainer?(container: Container): void
 }
+
+// Unimplemented:
+// appendInitialChild
+// shouldSetTextContent
+// prepareForCommit, resetAfterCommit
+// resetTextContent, clearContainer
+// portals

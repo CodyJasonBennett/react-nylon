@@ -35,9 +35,6 @@ const config: HostConfig<string, any, HTMLElement, Instance, Instance, TextInsta
   createInstance(type, props) {
     return applyProps(document.createElement(type), {}, props)
   },
-  commitUpdate(instance, oldProps, newProps, fiber) {
-    applyProps(instance, oldProps, newProps)
-  },
   createTextInstance(text) {
     return document.createTextNode(text)
   },
@@ -47,15 +44,58 @@ const config: HostConfig<string, any, HTMLElement, Instance, Instance, TextInsta
   getPublicInstance(instance) {
     return instance
   },
-  appendChild(parentInstance, childInstance) {
-    parentInstance.appendChild(childInstance)
+  appendInitialChild(parent, child) {
+    parent.appendChild(child)
   },
-  insertBefore(parentInstance, child, beforeChild) {
-    parentInstance.insertBefore(child, beforeChild)
+  appendChild(parent, child) {
+    parent.appendChild(child)
   },
-  removeChild(parentInstance, childInstance) {
-    parentInstance.removeChild(childInstance)
+  appendChildToContainer(container, child) {
+    container.appendChild(child)
   },
+  insertBefore(parent, child, beforeChild) {
+    parent.insertBefore(child, beforeChild)
+  },
+  insertInContainerBefore(container, child, beforeChild) {
+    container.insertBefore(child, beforeChild)
+  },
+  removeChild(parent, child) {
+    parent.removeChild(child)
+  },
+  removeChildFromContainer(container, child) {
+    container.removeChild(child)
+  },
+  prepareUpdate(instance, type, oldProps, newProps, rootContainer, hostContext) {
+    return null
+  },
+  commitUpdate(instance, updatePayload, type, prevProps, nextProps, internalHandle) {
+    applyProps(instance, prevProps, nextProps)
+  },
+  finalizeInitialChildren(instance, type, props, rootContainer, hostContext) {
+    return false
+  },
+  commitMount(instance, type, props, internalHandle) {},
+  // Unimplemented
+  shouldSetTextContent(type, props) {
+    return true
+  },
+  getRootHostContext(rootContainer) {
+    return null
+  },
+  getChildHostContext(parentHostContext, type, rootContainer) {
+    return null
+  },
+  prepareForCommit(containerInfo) {
+    return null
+  },
+  resetAfterCommit(containerInfo) {},
+  resetTextContent(instance) {},
+  hideInstance(instance) {},
+  hideTextInstance(textInstance) {},
+  unhideInstance(instance, props) {},
+  unhideTextInstance(textInstance, text) {},
+  clearContainer(container) {},
+  preparePortalMount(containerInfo) {},
 }
 
 let i = 1

@@ -10,6 +10,7 @@ import {
   NOEFFECT,
   LAYOUTONCE,
   LAYOUT,
+  ReactCurrentRoot,
 } from './constants'
 import { startTransition } from './scheduler'
 import type * as React from 'react'
@@ -78,9 +79,16 @@ function handleSubRef(currentFiber: Fiber | undefined): void {
     currentFiber.ref = null
   }
 }
-function commitDeletion(currentFiber: Fiber, returnInstance: any): void {
+function commitDeletion(currentFiber: Fiber, returnFiber?: Fiber): void {
+  const returnInstance = returnFiber?.stateNode
+  const isContainer = returnInstance && !returnFiber?.return
+
   if (currentFiber.stateNode != null) {
-    ReactCurrentHostConfig.current.removeChild(returnInstance, currentFiber.stateNode)
+    if (isContainer) {
+      ReactCurrentHostConfig.current.removeChildFromContainer!(returnInstance, currentFiber.stateNode)
+    } else {
+      ReactCurrentHostConfig.current.removeChild!(returnInstance, currentFiber.stateNode)
+    }
   } else if (currentFiber.child != null) {
     commitDeletion(currentFiber.child, returnInstance)
 
@@ -113,14 +121,26 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
   while (returnFiber?.tag === FunctionComponent) returnFiber = returnFiber?.return
 
   const returnInstance = returnFiber?.stateNode
+  const isContainer = returnInstance && !returnFiber?.return
   if (currentFiber.effectTag === PLACEMENT) {
-    const nextFiber = currentFiber
-    if (nextFiber.stateNode != null) {
-      if (nextFiber.return?.tag === FunctionComponent && nextFiber.return?.siblingNode != null) {
-        ReactCurrentHostConfig.current.insertBefore(returnInstance, nextFiber.stateNode, nextFiber.return?.siblingNode)
+    if (currentFiber.stateNode != null) {
+      if (currentFiber.return?.tag === FunctionComponent && currentFiber.return?.siblingNode != null) {
+        if (isContainer) {
+          ReactCurrentHostConfig.current.insertInContainerBefore!(
+            returnInstance,
+            currentFiber.stateNode,
+            currentFiber.return?.siblingNode,
+          )
+        } else {
+          ReactCurrentHostConfig.current.insertBefore!(
+            returnInstance,
+            currentFiber.stateNode,
+            currentFiber.return?.siblingNode,
+          )
+        }
       } else {
         let nextInstance = null
-        let sibling = nextFiber.sibling
+        let sibling = currentFiber.sibling
         while (sibling != null && nextInstance == null) {
           if (sibling.stateNode != null && sibling.effectTag !== PLACEMENT) {
             nextInstance = sibling.stateNode
@@ -129,32 +149,72 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
           sibling = sibling.sibling
         }
         if (nextInstance != null) {
-          ReactCurrentHostConfig.current.insertBefore(returnInstance, nextFiber.stateNode, nextInstance)
+          if (isContainer) {
+            ReactCurrentHostConfig.current.insertInContainerBefore!(
+              returnInstance,
+              currentFiber.stateNode,
+              nextInstance,
+            )
+          } else {
+            ReactCurrentHostConfig.current.insertBefore!(returnInstance, currentFiber.stateNode, nextInstance)
+          }
         } else {
-          ReactCurrentHostConfig.current.appendChild(returnInstance, nextFiber.stateNode)
+          if (isContainer) {
+            ReactCurrentHostConfig.current.appendChildToContainer!(returnInstance, currentFiber.stateNode)
+          } else {
+            ReactCurrentHostConfig.current.appendChild!(returnInstance, currentFiber.stateNode)
+          }
         }
+      }
+
+      if (
+        ReactCurrentHostConfig.current.finalizeInitialChildren(
+          currentFiber.stateNode,
+          currentFiber.type as string,
+          currentFiber.props,
+          ReactCurrentRoot.current.stateNode,
+          null,
+        )
+      ) {
+        ReactCurrentHostConfig.current.commitMount!(
+          currentFiber.stateNode,
+          currentFiber.type as string,
+          currentFiber.props,
+          currentFiber,
+        )
       }
     }
   } else if (currentFiber.effectTag === DELETION) {
-    return commitDeletion(currentFiber, returnInstance)
+    return commitDeletion(currentFiber, returnFiber)
   } else if (currentFiber.effectTag === UPDATE) {
     if (currentFiber.tag === HostText) {
       if (currentFiber.alternate?.props.text !== currentFiber.props.text) {
-        ReactCurrentHostConfig.current.commitTextUpdate(
+        ReactCurrentHostConfig.current.commitTextUpdate!(
           currentFiber.stateNode as any,
           currentFiber.alternate?.props.text,
           currentFiber.props.text,
-          currentFiber,
         )
       }
     } else {
       if (currentFiber.tag !== FunctionComponent) {
-        ReactCurrentHostConfig.current.commitUpdate(
-          currentFiber.stateNode as any,
+        const updatePayload = ReactCurrentHostConfig.current.prepareUpdate(
+          currentFiber.stateNode,
+          currentFiber.type as string,
           currentFiber.alternate?.props,
           currentFiber.props,
-          currentFiber,
+          ReactCurrentRoot.current.stateNode,
+          null,
         )
+        if (updatePayload != null) {
+          ReactCurrentHostConfig.current.commitUpdate!(
+            currentFiber.stateNode as any,
+            updatePayload,
+            currentFiber.type as string,
+            currentFiber.alternate?.props,
+            currentFiber.props,
+            currentFiber,
+          )
+        }
       }
     }
   }

@@ -1,10 +1,11 @@
 import * as React from 'react'
-import type { HostConfig } from './types'
+import type { HostConfig, Fiber } from './types'
 
 export const { ReactCurrentDispatcher } = (React as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
 export const ReactCurrentHostConfig = { current: null! } as React.MutableRefObject<
   HostConfig<any, any, any, any, any, any>
 >
+export const ReactCurrentRoot: React.MutableRefObject<Fiber> = { current: null! }
 
 export const HostRoot = 0
 export const FunctionComponent = 1

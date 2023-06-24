@@ -1,6 +1,13 @@
 import { renderWithHooks } from './hooks'
 import { reconcileChildFibers, mountChildFibers } from './reconciler'
-import { ReactCurrentHostConfig, FunctionComponent, HostComponent, HostRoot, HostText } from './constants'
+import {
+  ReactCurrentHostConfig,
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText,
+  ReactCurrentRoot,
+} from './constants'
 import type { Fiber } from './types'
 
 function updateHostRoot(current: Fiber | null, workInProgress: Fiber): void {
@@ -27,6 +34,8 @@ function updateHost(current: Fiber | null, workInProgress: Fiber): void {
     workInProgress.stateNode = ReactCurrentHostConfig.current.createInstance(
       workInProgress.type as string,
       workInProgress.props,
+      ReactCurrentRoot.current.stateNode,
+      null,
       workInProgress,
     )
   }
@@ -38,6 +47,8 @@ function mountHost(current: Fiber | null, workInProgress: Fiber): void {
     workInProgress.stateNode = ReactCurrentHostConfig.current.createInstance(
       workInProgress.type as string,
       workInProgress.props,
+      ReactCurrentRoot.current.stateNode,
+      null,
       workInProgress,
     )
   }
@@ -49,6 +60,8 @@ function updateHostText(current: Fiber | null, workInProgress: Fiber): void {
   if (workInProgress.stateNode == null) {
     workInProgress.stateNode = ReactCurrentHostConfig.current.createTextInstance(
       workInProgress.props.text,
+      ReactCurrentRoot.current.stateNode,
+      null,
       workInProgress,
     )
   }
@@ -57,6 +70,8 @@ function mountHostText(current: Fiber | null, workInProgress: Fiber): void {
   if (workInProgress.stateNode == null) {
     workInProgress.stateNode = ReactCurrentHostConfig.current.createTextInstance(
       workInProgress.props.text,
+      ReactCurrentRoot.current.stateNode,
+      null,
       workInProgress,
     )
   }

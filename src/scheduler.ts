@@ -1,6 +1,6 @@
 import { commitRoot } from './commit'
 import { beginWork } from './beginWork'
-import { HostRoot, ReactCurrentHostConfig } from './constants'
+import { HostRoot, ReactCurrentRoot, ReactCurrentHostConfig } from './constants'
 import type { Fiber, HostConfig, Root } from './types'
 
 const workQueue: Function[] = []
@@ -72,6 +72,7 @@ function bridge(deadline: IdleDeadline): void {
     workInProgress = null
   } else {
     const workInProgressRoot = workInProgressRoots.shift()
+    ReactCurrentRoot.current = workInProgressRoot!
     if (workInProgressRoot == null) return
 
     ReactCurrentHostConfig.current = configs.get(workInProgressRoot.stateNode)!
