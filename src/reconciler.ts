@@ -3,6 +3,8 @@ import { deletions } from './scheduler'
 import type { Fiber } from './types'
 
 function createFiberFromElement(element: any): Fiber {
+  if (typeof element.then === 'function') element = element.value
+
   let { type, props, ref, key } = element
   let tag
 

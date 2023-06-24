@@ -172,7 +172,7 @@ function updateState(initialState: any): any {
 }
 function mountState(initialState: any): any {
   const hook = mountWorkInProgressHook()
-  hook.memoizedState = initialState?.() ?? initialState
+  hook.memoizedState = typeof initialState === 'function' ? initialState() : initialState
   const queue = (hook.queue = {
     pending: null,
     lastRenderedReducer: basicStateReducer,
@@ -333,6 +333,8 @@ const HookDispatcher = {
 const isReactComponent = (type: any): type is new (...args: any[]) => React.Component =>
   type.prototype?.isReactComponent
 
+const isPromise = <T>(value: any): value is Promise<T> => typeof value?.then === 'function'
+
 export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Component: any): any {
   currentlyRenderingFiber = workInProgress
   ReactCurrentDispatcher.current = HookDispatcher
@@ -340,15 +342,35 @@ export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Co
   mounted = current != null
 
   let children: any = currentlyRenderingFiber.props.children
-  if (typeof Component === 'function') {
-    if (isReactComponent(Component)) {
-      const instance = new Component(currentlyRenderingFiber.props)
-      currentlyRenderingFiber.stateNode ??= instance
-      // @ts-ignore
-      instance.props = currentlyRenderingFiber.props
-      children = instance.render()
+  try {
+    if (typeof Component === 'function') {
+      if (isReactComponent(Component)) {
+        const instance = new Component(currentlyRenderingFiber.props)
+        currentlyRenderingFiber.stateNode ??= instance
+        // @ts-ignore
+        instance.props = currentlyRenderingFiber.props
+        children = instance.render()
+      } else {
+        children = Component(currentlyRenderingFiber.props, currentlyRenderingFiber.ref)
+      }
+    }
+  } catch (e) {
+    if (isPromise(e)) {
+      let root: Fiber = currentlyRenderingFiber
+      while (root.return && root.type !== Symbol.for('react.suspense')) root = root.return
+      children = root.props.fallback
+
+      e.then((value) => {
+        // @ts-ignore
+        e.value = value
+        scheduleUpdateOnFiber(root)
+      })
     } else {
-      children = Component(currentlyRenderingFiber.props, currentlyRenderingFiber.ref)
+      let root: Fiber = currentlyRenderingFiber
+      while (root.return && !isReactComponent(root.type)) root = root.return
+
+      if (isReactComponent(root.type)) root.stateNode.componentDidCatch?.(e)
+      else throw e
     }
   }
 

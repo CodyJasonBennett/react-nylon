@@ -31,13 +31,16 @@ let workInProgress: Fiber | null = null
 let nextUnitOfWork: Fiber | null = null
 
 export function scheduleUpdateOnFiber(oldFiber: Fiber): void {
-  const newFiber = {
-    ...oldFiber,
-    alternate: oldFiber,
-  }
-  nextUnitOfWork = newFiber
-  workInProgress = newFiber
-  startTransition(bridge)
+  startTransition((deadline: IdleDeadline) => {
+    const newFiber = {
+      ...oldFiber,
+      alternate: oldFiber,
+    }
+    nextUnitOfWork = newFiber
+    workInProgress = newFiber
+
+    bridge(deadline)
+  })
 }
 
 function performUnitOfWork<P>(unitOfWorkFiber: Fiber<P>): Fiber<P> | null {
