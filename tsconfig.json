@@ -9,7 +9,7 @@
     "pretty": true,
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
-    "jsx": "preserve",
+    "jsx": "react",
     "paths": {
       "react-nylon": ["./src"]
     }
