@@ -338,7 +338,7 @@ export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Co
 
   let children: any = currentlyRenderingFiber.props.children
   if (typeof Component === 'function') {
-    children = new Component(currentlyRenderingFiber.props)
+    children = new Component(currentlyRenderingFiber.props, currentlyRenderingFiber.ref)
     if (children instanceof React.Component) {
       currentlyRenderingFiber.stateNode ??= children
       // @ts-ignore
