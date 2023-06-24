@@ -6,11 +6,9 @@ import type { Fiber, HostConfig, Root } from './types'
 const workQueue: Function[] = []
 let pending: boolean = false
 
-if (typeof window !== 'undefined') {
-  // @ts-expect-error Safari polyfill https://caniuse.com/requestidlecallback
-  window.requestIdleCallback ??= (callback: (deadline: IdleDeadline) => void) =>
-    callback({ didTimeout: false, timeRemaining: () => Number.MAX_VALUE })
-}
+// @ts-expect-error Safari polyfill https://caniuse.com/requestidlecallback
+globalThis.requestIdleCallback ??= (callback: (deadline: IdleDeadline) => void) =>
+  callback({ didTimeout: false, timeRemaining: () => Number.MAX_VALUE })
 
 function flushQueue(deadline: IdleDeadline): void {
   pending = true

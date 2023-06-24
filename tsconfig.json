@@ -9,6 +9,7 @@
     "pretty": true,
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
     "jsx": "react",
     "paths": {
       "react-nylon": ["./src"]
