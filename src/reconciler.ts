@@ -13,7 +13,7 @@ function createFiberFromElement(element: any): Fiber {
   } else if (typeof type === 'string') {
     tag = HostComponent
   } else {
-    if (typeof type !== 'function') type = type.render ?? type.$$typeof
+    if (typeof type !== 'function') type = type.render ?? type.type ?? type.$$typeof
     tag = FunctionComponent
   }
 
