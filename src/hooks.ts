@@ -172,11 +172,11 @@ function updateState(initialState: any): any {
 }
 function mountState(initialState: any): any {
   const hook = mountWorkInProgressHook()
-  hook.memoizedState = initialState
+  hook.memoizedState = initialState?.() ?? initialState
   const queue = (hook.queue = {
     pending: null,
     lastRenderedReducer: basicStateReducer,
-    lastRenderedState: initialState,
+    lastRenderedState: hook.memoizedState,
   })
   const dispatch = dispatchAction.bind(null, currentlyRenderingFiber!, queue)
   return [queue.lastRenderedState, dispatch]
