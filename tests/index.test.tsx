@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { vi, describe, it, expect } from 'vitest'
 import _Reconciler from 'react-reconciler'
-import { createRoot, Root, act as _act } from 'react-nylon'
+import { Reconciler as _Reconciler2, act as _act } from 'react-nylon'
 
 declare module 'react' {
   const unstable_act: <T = any>(cb: () => Promise<T>) => Promise<T>
@@ -33,70 +33,9 @@ declare global {
 
 let mocking = false
 
-function Reconciler<
-  Type,
-  Props,
-  Container,
-  Instance,
-  TextInstance,
-  SuspenseInstance,
-  HydratableInstance,
-  PublicInstance,
-  HostContext,
-  UpdatePayload,
-  ChildSet,
-  TimeoutHandle,
-  NoTimeout,
->(
-  config: _Reconciler.HostConfig<
-    Type,
-    Props,
-    Container,
-    Instance,
-    TextInstance,
-    SuspenseInstance,
-    HydratableInstance,
-    PublicInstance,
-    HostContext,
-    UpdatePayload,
-    ChildSet,
-    TimeoutHandle,
-    NoTimeout
-  >,
-): ReturnType<
-  typeof _Reconciler<
-    Type,
-    Props,
-    Container,
-    Instance,
-    TextInstance,
-    SuspenseInstance,
-    HydratableInstance,
-    PublicInstance,
-    HostContext,
-    UpdatePayload,
-    ChildSet,
-    TimeoutHandle,
-    NoTimeout
-  >
-> {
-  if (!mocking) return _Reconciler(config)
-
-  let _root: Root
-  return {
-    createContainer(container: any) {
-      _root = createRoot(container, config)
-    },
-    updateContainer(element: React.ReactNode) {
-      return _root.render(element)
-    },
-    createPortal() {},
-    injectIntoDevTools() {},
-  } as unknown as any
-}
-
 for (const suite of ['react-reconciler', 'react-nylon']) {
   mocking = suite === 'react-nylon'
+  const Reconciler = mocking ? _Reconciler2 : _Reconciler
   const act = suite === 'react-nylon' ? _act : React.unstable_act
 
   interface ReconcilerNode<P = Record<string, unknown>> {

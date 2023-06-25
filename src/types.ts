@@ -38,21 +38,22 @@ export interface Fiber<P = any> {
   effect?: Effect[] | null
 }
 
-export interface Root {
-  render(element: React.ReactNode): void
-  unmount(): void
-}
-
 export interface HostConfig<
   Type,
   Props,
   Container,
   Instance,
   TextInstance,
+  SuspenseInstance,
+  HydratableInstance,
   PublicInstance,
   HostContext,
   UpdatePayload,
+  ChildSet,
+  TimeoutHandle,
+  NoTimeout,
 > {
+  [key: string]: unknown
   createInstance(
     type: Type,
     props: Props,

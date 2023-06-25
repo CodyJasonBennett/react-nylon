@@ -1,3 +1,4 @@
+import type { ReactNode, ReactPortal } from 'react'
 import { commitRoot } from './commit'
 import {
   ReactCurrentRoot,
@@ -7,7 +8,7 @@ import {
   HostText,
   HostRoot,
 } from './constants'
-import type { Fiber, HostConfig, Root } from './types'
+import type { Fiber, HostConfig } from './types'
 import { renderWithHooks } from './hooks'
 import { mountChildFibers, reconcileChildFibers } from './reconciler'
 
@@ -116,7 +117,7 @@ function performUnitOfWork<P>(unitOfWorkFiber: Fiber<P>): Fiber<P> | null {
 }
 
 const workInProgressRoots: Fiber[] = []
-const configs = new WeakMap<any, HostConfig<any, any, any, any, any, any, any, any>>()
+const configs = new WeakMap<any, HostConfig<any, any, any, any, any, any, any, any, any, any, any, any, any>>()
 
 function bridge(deadline: IdleDeadline): void {
   while (nextUnitOfWork != null && deadline.timeRemaining() > 0) {
@@ -141,15 +142,61 @@ function bridge(deadline: IdleDeadline): void {
   }
 }
 
-export function createRoot<Type, Props, Container, Instance, TextInstance, PublicInstance, HostContext, UpdatePayload>(
-  container: Container | null,
-  config: HostConfig<Type, Props, Container, Instance, TextInstance, PublicInstance, HostContext, UpdatePayload>,
-): Root {
-  configs.set(container, config)
+export function Reconciler<
+  Type,
+  Props,
+  Container,
+  Instance,
+  TextInstance,
+  SuspenseInstance,
+  HydratableInstance,
+  PublicInstance,
+  HostContext,
+  UpdatePayload,
+  ChildSet,
+  TimeoutHandle,
+  NoTimeout,
+>(
+  config: HostConfig<
+    Type,
+    Props,
+    Container,
+    Instance,
+    TextInstance,
+    SuspenseInstance,
+    HydratableInstance,
+    PublicInstance,
+    HostContext,
+    UpdatePayload,
+    ChildSet,
+    TimeoutHandle,
+    NoTimeout
+  >,
+) {
   let rootFiber: Fiber | null = null
 
   return {
-    render(element) {
+    createContainer(
+      containerInfo: Container,
+      tag: 0 | 1,
+      hydrationCallbacks: null | any,
+      isStrictMode: boolean,
+      concurrentUpdatesByDefaultOverride: null | boolean,
+      identifierPrefix: string,
+      onRecoverableError: (error: any) => void,
+      transitionCallbacks: null | any,
+    ): Container {
+      rootFiber = null
+      return containerInfo
+    },
+    updateContainer(
+      element: ReactNode,
+      container: Container,
+      parentComponent: React.Component<any, any>,
+      callback?: Function,
+    ): void {
+      configs.set(container, config)
+
       const currentRoot: Fiber = {
         tag: HostRoot,
         stateNode: container,
@@ -168,10 +215,34 @@ export function createRoot<Type, Props, Container, Instance, TextInstance, Publi
 
       workInProgressRoots.push(rootFiber)
       startTransition(bridge)
+
+      // if (callback) startTransition(callback)
     },
-    unmount() {
-      this.render(null)
-      rootFiber = null
+    createPortal(
+      children: ReactNode,
+      containerInfo: any,
+      // TODO: figure out the API for cross-renderer implementation.
+      implementation?: any,
+      key?: string | null,
+    ): ReactPortal {
+      return {
+        $$typeof: Symbol.for('react.portal'),
+        key: key == null ? null : '' + key,
+        children,
+        containerInfo,
+        implementation,
+      } as unknown as ReactPortal
     },
-  }
+    injectIntoDevTools(devToolsConfig: {
+      bundleType: 0 | 1
+      version: string
+      rendererPackageName: string
+      // Note: this actually *does* depend on Fiber internal fields.
+      // Used by "inspect clicked DOM element" in React DevTools.
+      findFiberByHostInstance?: (instance: Instance | TextInstance) => Fiber | null
+      rendererConfig?: any
+    }): boolean {
+      return false
+    },
+  } as unknown as any
 }

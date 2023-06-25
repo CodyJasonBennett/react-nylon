@@ -1,16 +1,27 @@
 import * as React from 'react'
-import { createRoot, type HostConfig } from 'react-nylon'
+import { Reconciler } from 'react-nylon'
 
-type Type = string
-type Props = Record<string, any>
-type Container = HTMLElement
-type Instance = HTMLElement
-type TextInstance = Text
-type PublicInstance = Instance
-type HostContext = null
-type UpdatePayload = void
+interface HostConfig {
+  type: string
+  props: Record<string, any>
+  container: HTMLElement
+  instance: HTMLElement
+  textInstance: Text
+  suspenseInstance: never
+  hydratableInstance: never
+  publicInstance: HTMLElement
+  hostContext: null
+  updatePayload: void
+  childSet: never
+  timeoutHandle: number
+  noTimeout: -1
+}
 
-function applyProps<T extends Instance>(instance: T, oldProps: Props, newProps: Props): T {
+function applyProps<T extends HostConfig['instance']>(
+  instance: T,
+  oldProps: HostConfig['props'],
+  newProps: HostConfig['props'],
+): T {
   for (const key in { ...oldProps, ...newProps }) {
     const oldValue = oldProps[key]
     const newValue = newProps[key]
@@ -37,7 +48,21 @@ function applyProps<T extends Instance>(instance: T, oldProps: Props, newProps: 
   return instance
 }
 
-const config: HostConfig<Type, Props, Container, Instance, TextInstance, PublicInstance, HostContext, UpdatePayload> = {
+const reconciler = Reconciler<
+  HostConfig['type'],
+  HostConfig['props'],
+  HostConfig['container'],
+  HostConfig['instance'],
+  HostConfig['textInstance'],
+  HostConfig['suspenseInstance'],
+  HostConfig['hydratableInstance'],
+  HostConfig['publicInstance'],
+  HostConfig['hostContext'],
+  HostConfig['updatePayload'],
+  HostConfig['childSet'],
+  HostConfig['timeoutHandle'],
+  HostConfig['noTimeout']
+>({
   createInstance(type, props) {
     return applyProps(document.createElement(type), {}, props)
   },
@@ -100,7 +125,7 @@ const config: HostConfig<Type, Props, Container, Instance, TextInstance, PublicI
   unhideTextInstance(textInstance, text) {},
   clearContainer(container) {},
   preparePortalMount(containerInfo) {},
-}
+})
 
 let i = 1
 
@@ -113,6 +138,8 @@ function App() {
 
 await Promise.all(
   ['root', 'root2', 'root3'].map(async (id) => {
-    createRoot(document.getElementById(id)!, config).render(<App />)
+    const container = document.getElementById(id)!
+    const root = reconciler.createContainer(container, 1, null, false, null, '', console.error, null)
+    reconciler.updateContainer(<App />, root, null, undefined)
   }),
 )
