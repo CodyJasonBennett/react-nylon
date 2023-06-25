@@ -145,8 +145,6 @@ function updateLayoutEffect(cb: Function, deps?: React.DependencyList): void {
   effectListIndex++
 }
 
-const basicStateReducer = (state: any, action: any): any => (typeof action === 'function' ? action(state) : action)
-
 function dispatchAction(currentlyRenderingFiber: Fiber, queue: Queue, action: any): void {
   const update: any = { action, next: null }
   const pending = queue.pending
@@ -167,28 +165,21 @@ function dispatchAction(currentlyRenderingFiber: Fiber, queue: Queue, action: an
   scheduleUpdateOnFiber(currentlyRenderingFiber)
 }
 
+const basicStateReducer = (state: any, action: any): any => (typeof action === 'function' ? action(state) : action)
 function updateState(initialState: any): any {
   return updateReducer(basicStateReducer, initialState)
 }
 function mountState(initialState: any): any {
-  const hook = mountWorkInProgressHook()
-  hook.memoizedState = typeof initialState === 'function' ? initialState() : initialState
-  const queue = (hook.queue = {
-    pending: null,
-    lastRenderedReducer: basicStateReducer,
-    lastRenderedState: hook.memoizedState,
-  })
-  const dispatch = dispatchAction.bind(null, currentlyRenderingFiber!, queue)
-  return [queue.lastRenderedState, dispatch]
+  return mountReducer(basicStateReducer, typeof initialState === 'function' ? initialState() : initialState)
 }
 
 function mountReducer(reducer: any, initialArg: any, initializer?: any): any {
   const hook = mountWorkInProgressHook()
-  hook.memoizedState = initialArg
+  hook.memoizedState = typeof initializer === 'function' ? initializer(initialArg) : initialArg
   const queue = (hook.queue = {
     pending: null,
     lastRenderedReducer: reducer,
-    lastRenderedState: initialArg,
+    lastRenderedState: hook.memoizedState,
   })
   const dispatch = dispatchAction.bind(null, currentlyRenderingFiber!, queue)
   return [queue.lastRenderedState, dispatch]
@@ -255,10 +246,15 @@ function useImperativeHandle<T, R extends T>(
   init: () => R,
   deps?: React.DependencyList,
 ): void {
-  return useMemo(() => {
-    const instance = init()
-    if (typeof ref === 'function') ref(instance)
-    else if (ref) (ref as React.MutableRefObject<T>).current = instance
+  return useLayoutEffect(() => {
+    if (typeof ref === 'function') {
+      ref(init())
+      return () => ref(null!)
+    } else if (ref) {
+      const _ref = ref as React.MutableRefObject<T>
+      _ref.current = init()
+      return () => (_ref.current = null!)
+    }
   }, deps)
 }
 
@@ -379,5 +375,6 @@ export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Co
   workInProgressHook = null
   currentHook = null
   effectListIndex = 0
+
   return children
 }
