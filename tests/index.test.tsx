@@ -293,7 +293,7 @@ for (const suite of ['react-reconciler', 'react-nylon']) {
       expect(container.head).toBe(null)
     })
 
-    it.skip('should render text', async () => {
+    it('should render text', async () => {
       let container!: HostContainer
 
       // Mount
