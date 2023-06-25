@@ -11,6 +11,21 @@ import type { Fiber, HostConfig, Root } from './types'
 import { renderWithHooks } from './hooks'
 import { mountChildFibers, reconcileChildFibers } from './reconciler'
 
+export const promises: Promise<any>[] = []
+const promise: React.MutableRefObject<Promise<any> & { resolve?: Function }> = { current: null! }
+
+export async function act<T = any>(cb: () => Promise<T>): Promise<T> {
+  let resolve: Function | undefined
+  promise.current = new Promise((res) => (resolve = res))
+  promise.current.resolve = resolve
+
+  const value = await cb()
+
+  await promise.current
+
+  return value
+}
+
 const workQueue: Function[] = []
 let pending: boolean = false
 
@@ -24,8 +39,15 @@ function flushQueue(deadline: IdleDeadline): void {
     const work = workQueue.shift()
     work?.(deadline)
   }
-  if (workQueue.length > 0) requestIdleCallback(flushQueue)
-  else pending = false
+  if (workQueue.length > 0) {
+    requestIdleCallback(flushQueue)
+  } else {
+    pending = false
+    if (promises.length === 0 && promise.current?.resolve) {
+      promise.current.resolve()
+      promise.current.resolve = undefined
+    }
+  }
 }
 
 export function startTransition(work: Function): void {

@@ -1,5 +1,5 @@
 import { ReactCurrentDispatcher, EFFECT, LAYOUT, NOEFFECT } from './constants'
-import { scheduleUpdateOnFiber, startTransition } from './scheduler'
+import { promises, scheduleUpdateOnFiber, startTransition } from './scheduler'
 import * as React from 'react'
 import type { Fiber, Hook, Queue, Effect } from './types'
 
@@ -354,9 +354,15 @@ export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Co
       while (root.return && root.type !== Symbol.for('react.suspense')) root = root.return
       children = root.props.fallback
 
+      promises.push(e)
+
       e.then((value) => {
         // @ts-ignore
         e.value = value
+
+        const index = promises.indexOf(e as Promise<any>)
+        if (index !== -1) promises.splice(index, 1)
+
         scheduleUpdateOnFiber(root)
       })
     } else {

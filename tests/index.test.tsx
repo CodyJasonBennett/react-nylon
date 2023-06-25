@@ -1,13 +1,11 @@
 import * as React from 'react'
 import { vi, describe, it, expect } from 'vitest'
 import _Reconciler from 'react-reconciler'
-import { createRoot, Root } from 'react-nylon'
+import { createRoot, Root, act as _act } from 'react-nylon'
 
 declare module 'react' {
   const unstable_act: <T = any>(cb: () => Promise<T>) => Promise<T>
 }
-
-const act = React.unstable_act
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -99,6 +97,7 @@ function Reconciler<
 
 for (const suite of ['react-reconciler', 'react-nylon']) {
   mocking = suite === 'react-nylon'
+  const act = suite === 'react-nylon' ? _act : React.unstable_act
 
   interface ReconcilerNode<P = Record<string, unknown>> {
     type: string
@@ -292,19 +291,6 @@ for (const suite of ['react-reconciler', 'react-nylon']) {
       // Unmount
       await act(async () => void (container = render(<></>)))
       expect(container.head).toBe(null)
-
-      // Suspense
-      // const promise = Promise.resolve()
-      // const Test = () => (suspend(promise), (<element bar />))
-      // await act(async () => void (container = render(<Test />)))
-      // expect(container.head).toStrictEqual({ type: 'element', props: { bar: true }, children: [] })
-
-      // Portals
-      const portalContainer: HostContainer = { head: null }
-      await act(async () => void (container = render(createPortal(<element />, portalContainer))))
-      expect(container.head).toBe(null)
-      expect(portalContainer.head).toBe(null)
-      // expect(portalContainer.head).toStrictEqual({ type: 'element', props: {}, children: [] })
     })
 
     it.skip('should render text', async () => {
@@ -325,18 +311,25 @@ for (const suite of ['react-reconciler', 'react-nylon']) {
       // Unmount
       await act(async () => void (container = render(<></>)))
       expect(container.head).toBe(null)
+    })
 
-      // Suspense
-      // const promise = Promise.resolve()
-      // const Test = () => (suspend(promise), (<>three</>))
-      // await act(async () => void (container = render(<Test />)))
-      // expect(container.head).toStrictEqual({ type: 'text', props: { value: 'three' }, children: [] })
+    it('can handle suspense', async () => {
+      let prerenders = 0
+      let postrenders = 0
+      const promise = Promise.resolve()
+      const Test = () => (prerenders++, suspend(promise), postrenders++, (<element bar />))
 
-      // Portals
+      const container = await act(async () => render(<Test />))
+      expect(container.head).toStrictEqual({ type: 'element', props: { bar: true }, children: [] })
+      expect(prerenders).toBe(2)
+      expect(postrenders).toBe(1)
+    })
+
+    it.skip('can handle portals', async () => {
       const portalContainer: HostContainer = { head: null }
-      await act(async () => void (container = render(createPortal('four', portalContainer))))
+      const container = await act(async () => render(createPortal(<element />, portalContainer)))
       expect(container.head).toBe(null)
-      // expect(portalContainer.head).toStrictEqual({ type: 'text', props: { value: 'four' }, children: [] })
+      expect(portalContainer.head).toStrictEqual({ type: 'element', props: {}, children: [] })
     })
   })
 }
