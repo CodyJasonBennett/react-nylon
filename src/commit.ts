@@ -58,11 +58,11 @@ function commitDeletion(currentFiber: Fiber, returnFiber?: Fiber): void {
       ReactCurrentHostConfig.current.removeChild!(returnInstance, currentFiber.stateNode)
     }
   } else if (currentFiber.child != null) {
-    commitDeletion(currentFiber.child, returnInstance)
+    commitDeletion(currentFiber.child, returnFiber)
 
     let sibling: Fiber | undefined = currentFiber.child.sibling
     while (sibling != null) {
-      commitDeletion(sibling, returnInstance)
+      commitDeletion(sibling, returnFiber)
       sibling = sibling.sibling
     }
   }
