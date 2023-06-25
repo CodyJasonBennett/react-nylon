@@ -4,67 +4,35 @@ import {
   PLACEMENT,
   HostText,
   UPDATE,
+  NOEFFECT,
+  LAYOUT,
   EFFECT,
   FunctionComponent,
-  EFFECTONCE,
-  NOEFFECT,
-  LAYOUTONCE,
-  LAYOUT,
   ReactCurrentRoot,
 } from './constants'
 import { startTransition } from './scheduler'
 import type * as React from 'react'
 import type { Fiber } from './types'
 
-function commitHookEffectList(currentFiber: Fiber, fiberTag?: any): void {
+function commitHookEffectList(currentFiber: Fiber): void {
   const effectList = currentFiber.effect
   if (!effectList) return
 
   for (const effect of effectList) {
-    if (effect.tag === NOEFFECT) continue
-    if (fiberTag === DELETION || effect.tag === EFFECT) {
-      const destroy = effect.destroy
-      effect.destroy = undefined
-      if (destroy !== undefined) {
-        destroy()
-      }
-      if (fiberTag === DELETION) effect.tag = NOEFFECT
-    }
-    if (effect.tag === EFFECTONCE) {
-      const create = effect.create
-      effect.destroy = create()
-      effect.tag = NOEFFECT
-    }
-    if (effect.tag === EFFECT) {
-      const create = effect.create
-      effect.destroy = create()
-    }
-  }
-}
+    if (effect.tag !== (currentFiber.effectTag == null ? EFFECT : LAYOUT)) continue
 
-function commitHookLayoutEffectList(currentFiber: Fiber, fiberTag?: any): void {
-  const effectList = currentFiber.effect
-  if (!effectList) return
-
-  for (const effect of effectList) {
-    if (effect.tag === NOEFFECT) continue
-    if (fiberTag === DELETION || effect.tag === LAYOUT) {
-      const destroy = effect.destroy
+    if (currentFiber.effectTag === DELETION || effect.deps?.length) {
+      effect.destroy?.()
       effect.destroy = undefined
-      if (destroy !== undefined) {
-        destroy()
+
+      if (currentFiber.effectTag === DELETION) {
+        effect.tag = NOEFFECT
+        continue
       }
-      if (fiberTag === DELETION) effect.tag = NOEFFECT
     }
-    if (effect.tag === LAYOUTONCE) {
-      const create = effect.create
-      effect.destroy = create()
-      effect.tag = NOEFFECT
-    }
-    if (effect.tag === LAYOUT) {
-      const create = effect.create
-      effect.destroy = create()
-    }
+
+    effect.destroy = effect.create()
+    if (!effect.deps?.length) effect.tag = NOEFFECT
   }
 }
 
@@ -98,24 +66,23 @@ function commitDeletion(currentFiber: Fiber, returnFiber?: Fiber): void {
       sibling = sibling.sibling
     }
   }
-  startTransition(() => commitHookEffectList(currentFiber, DELETION))
-  commitHookLayoutEffectList(currentFiber, DELETION)
+  startTransition(() => commitHookEffectList(currentFiber))
+  commitHookEffectList(currentFiber)
   handleSubRef(currentFiber)
 }
 
 export function commitRoot(workInProgressRoot: Fiber, deletions: Fiber[]): void {
   for (const fiber of deletions) commitWork(fiber)
   startTransition(() => commitHookEffectList(workInProgressRoot))
-  commitHookLayoutEffectList(workInProgressRoot)
+  commitHookEffectList(workInProgressRoot)
   commitWork(workInProgressRoot.child)
   deletions.length = 0
 }
 
 export function commitWork(currentFiber: Fiber | null | undefined): void {
   if (currentFiber == null) return
-  const fiberTag = currentFiber.effectTag
-  startTransition(() => commitHookEffectList(currentFiber, fiberTag))
-  commitHookLayoutEffectList(currentFiber, fiberTag)
+  startTransition(() => commitHookEffectList(currentFiber))
+  commitHookEffectList(currentFiber)
 
   let returnFiber = currentFiber.return
   while (returnFiber?.tag === FunctionComponent) returnFiber = returnFiber?.return

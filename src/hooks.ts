@@ -1,4 +1,4 @@
-import { ReactCurrentDispatcher, EFFECT, LAYOUT, NOEFFECT, EFFECTONCE, LAYOUTONCE } from './constants'
+import { ReactCurrentDispatcher, EFFECT, LAYOUT, NOEFFECT } from './constants'
 import { scheduleUpdateOnFiber, startTransition } from './scheduler'
 import * as React from 'react'
 import type { Fiber, Hook, Queue, Effect } from './types'
@@ -109,8 +109,7 @@ function updateMemo(cb: Function, deps?: React.DependencyList): any {
 
 function mountEffect(cb: Function, deps?: React.DependencyList): void {
   const nextDeps = deps === undefined ? null : deps
-  const tag = nextDeps?.length === 0 ? EFFECTONCE : EFFECT
-  pushEffect(tag, cb, undefined, nextDeps)
+  pushEffect(EFFECT, cb, undefined, nextDeps)
   effectListIndex++
 }
 function updateEffect(cb: Function, deps?: React.DependencyList): void {
@@ -128,8 +127,7 @@ function updateEffect(cb: Function, deps?: React.DependencyList): void {
 
 function mountLayoutEffect(cb: Function, deps?: React.DependencyList): void {
   const nextDeps = deps === undefined ? null : deps
-  const tag = nextDeps?.length === 0 ? LAYOUTONCE : LAYOUT
-  pushEffect(tag, cb, undefined, nextDeps)
+  pushEffect(LAYOUT, cb, undefined, nextDeps)
   effectListIndex++
 }
 function updateLayoutEffect(cb: Function, deps?: React.DependencyList): void {

@@ -16,8 +16,6 @@ export const PLACEMENT = 0
 export const UPDATE = 1
 export const DELETION = 2
 
-export const NOEFFECT = 9
+export const NOEFFECT = 0
 export const EFFECT = 1
-export const EFFECTONCE = 2
-export const LAYOUT = 3
-export const LAYOUTONCE = 4
+export const LAYOUT = 2
