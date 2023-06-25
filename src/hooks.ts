@@ -325,7 +325,7 @@ const HookDispatcher = {
 }
 
 const isReactComponent = (type: any): type is new (...args: any[]) => React.Component =>
-  type.prototype?.isReactComponent
+  type?.prototype?.isReactComponent
 
 const isPromise = <T>(value: any): value is Promise<T> => typeof value?.then === 'function'
 
@@ -340,22 +340,24 @@ export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Co
     if (typeof Component === 'function') {
       if (isReactComponent(Component)) {
         const instance = new Component(currentlyRenderingFiber.props)
-        if (!currentlyRenderingFiber.stateNode) {
-          instance.state ??= {}
-          const fiber = currentlyRenderingFiber
-          instance.forceUpdate = (callback?: () => void) => {
-            scheduleUpdateOnFiber(fiber)
-            if (callback) startTransition(callback)
-          }
-          instance.setState = (state: Function | any, callback?: () => void) => {
-            const newState = typeof state === 'function' ? state(instance.state, instance.props) : state
-            if (newState) {
-              Object.assign(instance.state, newState)
-              instance.forceUpdate(callback)
-            }
-          }
-          currentlyRenderingFiber.stateNode = instance
+
+        // @ts-ignore
+        instance.props ??= currentlyRenderingFiber.props
+        instance.state ??= {}
+
+        const fiber = currentlyRenderingFiber
+        instance.forceUpdate = function (callback?: () => void) {
+          scheduleUpdateOnFiber(fiber)
+          if (callback) startTransition(callback)
         }
+        instance.setState = function (state: Function | any, callback?: () => void) {
+          const newState = typeof state === 'function' ? state(instance.state, instance.props) : state
+          if (newState) {
+            Object.assign(instance.state, newState)
+            instance.forceUpdate(callback)
+          }
+        }
+        currentlyRenderingFiber.stateNode ??= instance
 
         children = instance.render()
       } else {
@@ -387,7 +389,7 @@ export function renderWithHooks(current: Fiber | null, workInProgress: Fiber, Co
       const getDerivedStateFromError = (root.type as any).getDerivedStateFromError
       if (getDerivedStateFromError) instance!.setState(getDerivedStateFromError(e))
 
-      const componentDidCatch = instance?.componentDidCatch
+      const componentDidCatch = instance?.componentDidCatch?.bind(instance)
       if (componentDidCatch) componentDidCatch?.(e as Error, {} as React.ErrorInfo)
       else throw e
     }
