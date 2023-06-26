@@ -7,6 +7,7 @@ import {
   HostComponent,
   HostText,
   HostRoot,
+  HostPortal,
 } from './constants'
 import type { Fiber, HostConfig } from './types'
 import { renderWithHooks } from './hooks'
@@ -90,6 +91,9 @@ function beginWork(current: Fiber | null, workInProgress: Fiber): void {
       null,
       workInProgress,
     )
+  } else if (workInProgress.tag === HostPortal) {
+    const containerInfo = (workInProgress.stateNode ??= workInProgress.props.containerInfo)
+    if (current == null) ReactCurrentHostConfig.current.preparePortalMount(containerInfo)
   }
 
   const children =

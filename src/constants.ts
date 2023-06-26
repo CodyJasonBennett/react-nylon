@@ -8,9 +8,10 @@ export const ReactCurrentHostConfig = { current: null! } as React.MutableRefObje
 export const ReactCurrentRoot: React.MutableRefObject<Fiber> = { current: null! }
 
 export const HostRoot = 0
-export const FunctionComponent = 1
-export const HostComponent = 2
-export const HostText = 3
+export const HostPortal = 1
+export const FunctionComponent = 2
+export const HostComponent = 3
+export const HostText = 4
 
 export const PLACEMENT = 0
 export const UPDATE = 1

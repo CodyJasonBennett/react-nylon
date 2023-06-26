@@ -148,9 +148,8 @@ for (const suite of ['react-reconciler', 'react-nylon']) {
     return container
   }
 
-  function createPortal(_element: React.ReactNode, _container: HostContainer): JSX.Element {
-    // return <>{reconciler.createPortal(element, container, null, null)}</>
-    return <></>
+  function createPortal(element: React.ReactNode, container: HostContainer): JSX.Element {
+    return <>{reconciler.createPortal(element, container, null, null)}</>
   }
 
   const resolved = new WeakMap<Promise<any>, boolean>()
@@ -273,11 +272,10 @@ for (const suite of ['react-reconciler', 'react-nylon']) {
       expect(postrenders).toBe(1)
     })
 
-    it.skip('can handle portals', async () => {
-      const portalContainer: HostContainer = { head: null }
-      const container = await act(async () => render(createPortal(<element />, portalContainer)))
-      expect(container.head).toBe(null)
-      expect(portalContainer.head).toStrictEqual({ type: 'element', props: {}, children: [] })
+    it('can handle portals', async () => {
+      const container: HostContainer = { head: null }
+      await act(async () => render(createPortal(<element />, container)))
+      expect(container.head).toStrictEqual({ type: 'element', props: {}, children: [] })
     })
   })
 }
