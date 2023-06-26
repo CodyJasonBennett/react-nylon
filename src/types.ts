@@ -9,7 +9,7 @@ export interface Queue {
 export interface Effect {
   tag: number
   create: Function
-  destroy: Function | undefined
+  destroy?: Function
   deps: React.DependencyList | null
 }
 

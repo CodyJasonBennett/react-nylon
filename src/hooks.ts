@@ -17,11 +17,18 @@ function depsChanged(
   return a.length !== b.length || b.some((arg: any, index: number) => !Object.is(arg, a[index]))
 }
 
-function mountWorkInProgressHook(): Hook {
-  const hook = {
+function getWorkInProgressHook(): Hook {
+  const hook: Hook = {
     memoizedState: null,
     queue: null,
     next: null,
+  }
+
+  if (mounted) {
+    currentHook = currentHook?.next ?? currentHook ?? currentlyRenderingFiber!.alternate!.hook!
+
+    hook.memoizedState = currentHook.memoizedState
+    hook.queue = currentHook.queue
   }
 
   if (workInProgressHook === null) {
@@ -29,100 +36,39 @@ function mountWorkInProgressHook(): Hook {
   } else {
     workInProgressHook = workInProgressHook.next = hook
   }
-  return workInProgressHook
-}
-
-function updateWorkInProgressHook(): Hook {
-  const nextCurrentHook = currentHook?.next ?? currentHook ?? currentlyRenderingFiber!.alternate!.hook!
-  currentHook = nextCurrentHook
-
-  const newHook = {
-    memoizedState: currentHook.memoizedState,
-    queue: currentHook.queue,
-    next: null,
-  }
-
-  if (workInProgressHook === null) {
-    currentlyRenderingFiber!.hook = workInProgressHook = newHook
-  } else {
-    workInProgressHook.next = newHook
-    workInProgressHook = newHook
-  }
 
   return workInProgressHook
 }
 
-function pushEffect(
-  tag: number,
-  create: Function,
-  destroy: Function | undefined,
-  deps: React.DependencyList | null,
-): Effect {
-  const effect: Effect = {
-    tag,
-    create,
-    destroy,
-    deps,
-  }
-  if (currentlyRenderingFiber!.effect == null) {
-    currentlyRenderingFiber!.effect = [effect]
+function effectImpl(tag: number, create: Function, deps: React.DependencyList | null = null): void {
+  if (mounted) {
+    const effect = currentlyRenderingFiber!.effect![effectListIndex++]
+    effect.tag = depsChanged(deps, effect.deps) ? tag : NOEFFECT
+    effect.create = create
+    effect.deps = deps
   } else {
-    currentlyRenderingFiber!.effect[effectListIndex] = effect
-  }
+    const effect: Effect = {
+      tag,
+      create,
+      deps,
+    }
 
-  return effect
-}
-
-function updateCurrentEffect(
-  tag: number,
-  create: Function,
-  destroy: Function | undefined,
-  deps: React.DependencyList | null,
-): void {
-  currentlyRenderingFiber!.effect![effectListIndex] = {
-    tag,
-    create,
-    destroy,
-    deps,
+    currentlyRenderingFiber!.effect ??= []
+    currentlyRenderingFiber!.effect[effectListIndex++] = effect
   }
 }
 
-function mountMemo(cb: Function, deps?: React.DependencyList): any {
-  const hook = mountWorkInProgressHook()
-  hook.memoizedState = {
-    res: cb(),
-    deps,
-  }
-  return hook.memoizedState.res
-}
-function updateMemo(cb: Function, deps?: React.DependencyList): any {
-  const hook = updateWorkInProgressHook()
-
-  if (depsChanged(hook.memoizedState.deps, deps)) {
-    hook.memoizedState.res = cb()
-    hook.memoizedState.deps = deps
-    return hook.memoizedState.res
+function readContext<T>(context: React.Context<T>): T {
+  let contextFiber = currentlyRenderingFiber!.return
+  while (contextFiber && contextFiber.type !== Symbol.for('react.provider')) {
+    contextFiber = contextFiber.return
   }
 
-  return hook.memoizedState.res
+  return contextFiber ? contextFiber.props.value : (context as any)._defaultValue
 }
 
-function mountEffect(tag: number, cb: Function, deps?: React.DependencyList): void {
-  const nextDeps = deps === undefined ? null : deps
-  pushEffect(tag, cb, undefined, nextDeps)
-  effectListIndex++
-}
-function updateEffect(tag: number, cb: Function, deps?: React.DependencyList): void {
-  const nextDeps = deps === undefined ? null : deps
-
-  if (currentHook !== null) {
-    const prevEffect = currentlyRenderingFiber!.effect![effectListIndex]
-    const destroy = prevEffect.destroy
-    const prevDeps = prevEffect.deps
-    if (!depsChanged(nextDeps, prevDeps)) tag = NOEFFECT
-    updateCurrentEffect(tag, cb, destroy, nextDeps)
-  }
-  effectListIndex++
+function useContext<T>(context: React.Context<T>): T {
+  return readContext(context)
 }
 
 function dispatchAction(currentlyRenderingFiber: Fiber, queue: Queue, action: any): void {
@@ -144,33 +90,24 @@ function dispatchAction(currentlyRenderingFiber: Fiber, queue: Queue, action: an
   if (Object.is(eagerState, lastRenderedState)) return
   scheduleUpdateOnFiber(currentlyRenderingFiber)
 }
-
-const basicStateReducer = (state: any, action: any): any => (typeof action === 'function' ? action(state) : action)
-function updateState(initialState: any): any {
-  return updateReducer(basicStateReducer, initialState)
-}
-function mountState(initialState: any): any {
-  return mountReducer(basicStateReducer, typeof initialState === 'function' ? initialState() : initialState)
-}
-
-function mountReducer(reducer: any, initialArg: any, initializer?: any): any {
-  const hook = mountWorkInProgressHook()
-  hook.memoizedState = typeof initializer === 'function' ? initializer(initialArg) : initialArg
-  const queue = (hook.queue = {
-    pending: null,
-    lastRenderedReducer: reducer,
-    lastRenderedState: hook.memoizedState,
-  })
-  const dispatch = dispatchAction.bind(null, currentlyRenderingFiber!, queue)
-  return [queue.lastRenderedState, dispatch]
-}
-function updateReducer(reducer: any, initialArg: any, initializer?: any): any {
-  const hook = updateWorkInProgressHook()
-  const queue = hook.queue
+function useReducer<R extends React.Reducer<any, any> | React.ReducerWithoutAction<any>, I>(
+  reducer: R,
+  initialState: I,
+  initializer?: (arg: I) => React.ReducerState<R>,
+): [I, React.Dispatch<R extends React.Reducer<any, any> ? React.ReducerAction<R> : React.DispatchWithoutAction>] {
+  const hook = getWorkInProgressHook()
+  let queue = hook.queue
   const current = currentHook
   const pendingQueue = queue?.pending
 
-  if (pendingQueue != null) {
+  if (!mounted) {
+    hook.memoizedState = typeof initializer === 'function' ? initializer(initialState) : initialState
+    queue = hook.queue = {
+      pending: null,
+      lastRenderedReducer: reducer,
+      lastRenderedState: hook.memoizedState,
+    }
+  } else if (pendingQueue != null) {
     const first = pendingQueue.next
     let newState = current!.memoizedState
     let update: Hook | null | undefined = first
@@ -188,40 +125,46 @@ function updateReducer(reducer: any, initialArg: any, initializer?: any): any {
   return [queue?.lastRenderedState, dispatch]
 }
 
-function readContext<T>(context: React.Context<T>): T {
-  let contextFiber = currentlyRenderingFiber!.return
-  while (contextFiber && contextFiber.type !== Symbol.for('react.provider')) {
-    contextFiber = contextFiber.return
-  }
-
-  return contextFiber ? contextFiber.props.value : (context as any)._defaultValue
+const basicStateReducer = (state: any, action: any): any => (typeof action === 'function' ? action(state) : action)
+function useState<S>(initialState?: S | (() => S)): [S, React.Dispatch<React.SetStateAction<S | undefined>>] {
+  return useReducer(basicStateReducer, initialState as S, (state) => (typeof state === 'function' ? state() : state))
 }
 
-function useContext<T>(context: React.Context<T>): T {
-  return readContext(context)
+function useMemo<T>(factory: () => T, deps: React.DependencyList | undefined): T {
+  const hook = getWorkInProgressHook()
+
+  if (!mounted) {
+    hook.memoizedState = {
+      res: factory(),
+      deps,
+    }
+  } else if (depsChanged(hook.memoizedState.deps, deps)) {
+    hook.memoizedState.res = factory()
+    hook.memoizedState.deps = deps
+    return hook.memoizedState.res
+  }
+
+  return hook.memoizedState.res
 }
 
 function useCallback<T extends Function>(callback: T, deps: React.DependencyList): T {
   return useMemo(() => callback, deps)
 }
 
-function useDebugValue<T>(value: T, format?: (value: T) => any): void {
-  // This hook is normally a no-op.
-  // The react-debug-hooks package injects its own implementation
-  // so that e.g. DevTools can display custom hook values.
-}
-
-function useDeferredValue<T>(value: T): T {
-  return value
+function useRef<T>(current?: T): React.MutableRefObject<T | undefined> {
+  return useMemo(() => ({ current }), [])
 }
 
 function useEffect(effect: React.EffectCallback, deps?: React.DependencyList): void {
-  return mounted ? updateEffect(EFFECT, effect, deps) : mountEffect(EFFECT, effect, deps)
+  return effectImpl(EFFECT, effect, deps)
 }
 
-let id = 0
-function useId(): string {
-  return useMemo(() => '' + id++, [])
+function useLayoutEffect(effect: React.EffectCallback, deps?: React.DependencyList): void {
+  return effectImpl(LAYOUT, effect, deps)
+}
+
+function useInsertionEffect(effect: React.EffectCallback, deps?: React.DependencyList): void {
+  return effectImpl(INSERTION, effect, deps)
 }
 
 function useImperativeHandle<T, R extends T>(
@@ -241,32 +184,19 @@ function useImperativeHandle<T, R extends T>(
   }, deps)
 }
 
-function useInsertionEffect(effect: React.EffectCallback, deps?: React.DependencyList): void {
-  return mounted ? updateEffect(INSERTION, effect, deps) : mountEffect(INSERTION, effect, deps)
+function useDebugValue<T>(value: T, format?: (value: T) => any): void {
+  // This hook is normally a no-op.
+  // The react-debug-hooks package injects its own implementation
+  // so that e.g. DevTools can display custom hook values.
 }
 
-function useLayoutEffect(effect: React.EffectCallback, deps?: React.DependencyList): void {
-  return mounted ? updateEffect(LAYOUT, effect, deps) : mountEffect(LAYOUT, effect, deps)
+function useDeferredValue<T>(value: T): T {
+  return value
 }
 
-function useMemo<T>(factory: () => T, deps: React.DependencyList | undefined): T {
-  return mounted ? updateMemo(factory, deps) : mountMemo(factory, deps)
-}
-
-function useReducer<R extends React.Reducer<any, any> | React.ReducerWithoutAction<any>, I>(
-  reducer: R,
-  initialState: I,
-  initializer?: (arg: I & React.ReducerState<R>) => React.ReducerState<R>,
-): [I, React.Dispatch<R extends React.Reducer<any, any> ? React.ReducerAction<R> : React.DispatchWithoutAction>] {
-  return mounted ? updateReducer(reducer, initialState, initializer) : mountReducer(reducer, initialState, initializer)
-}
-
-function useRef<T>(current?: T): React.MutableRefObject<T | undefined> {
-  return useMemo(() => ({ current }), [])
-}
-
-function useState<S>(initialState?: S | (() => S)): [S, React.Dispatch<React.SetStateAction<S | undefined>>] {
-  return mounted ? updateState(initialState) : mountState(initialState)
+let id = 0
+function useId(): string {
+  return useMemo(() => '' + id++, [])
 }
 
 function useSyncExternalStore<Snapshot>(
@@ -307,7 +237,7 @@ function useTransition(): [boolean, React.TransitionStartFunction] {
   return [pending, transitionStartFn]
 }
 
-const HookDispatcher = {
+const HookDispatcher: Record<string, Function> = {
   readContext,
   useCallback,
   useContext,
