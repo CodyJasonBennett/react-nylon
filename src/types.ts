@@ -67,7 +67,7 @@ export interface HostConfig<
     hostContext: HostContext,
     internalHandle: Fiber,
   ): TextInstance
-  appendInitialChild(parent: Instance, child: Instance | TextInstance): void
+  // appendInitialChild(parent: Instance, child: Instance | TextInstance): void
   finalizeInitialChildren(
     instance: Instance,
     type: Type,
@@ -83,12 +83,12 @@ export interface HostConfig<
     rootContainer: Container,
     hostContext: HostContext,
   ): UpdatePayload | null
-  shouldSetTextContent(type: Type, props: Props): boolean
-  getRootHostContext(rootContainer: Container): HostContext | null
-  getChildHostContext(parentHostContext: HostContext, type: Type, rootContainer: Container): HostContext
+  // shouldSetTextContent(type: Type, props: Props): boolean
+  // getRootHostContext(rootContainer: Container): HostContext | null
+  // getChildHostContext(parentHostContext: HostContext, type: Type, rootContainer: Container): HostContext
   getPublicInstance(instance: Instance): PublicInstance
-  prepareForCommit(containerInfo: Container): Record<string, any> | null
-  resetAfterCommit(containerInfo: Container): void
+  // prepareForCommit(containerInfo: Container): Record<string, any> | null
+  // resetAfterCommit(containerInfo: Container): void
   preparePortalMount(containerInfo: Container): void
   appendChild?(parent: Instance, child: Instance | TextInstance): void
   appendChildToContainer?(container: Container, child: Instance | TextInstance): void
@@ -100,7 +100,7 @@ export interface HostConfig<
   ): void
   removeChild?(parent: Instance, child: Instance | TextInstance): void
   removeChildFromContainer?(container: Container, child: Instance | TextInstance): void
-  resetTextContent?(instance: Instance): void
+  // resetTextContent?(instance: Instance): void
   commitTextUpdate?(textInstance: TextInstance, oldText: string, newText: string): void
   commitMount?(instance: Instance, type: Type, props: Props, internalHandle: Fiber): void
   commitUpdate?(
@@ -111,16 +111,9 @@ export interface HostConfig<
     nextProps: Props,
     internalHandle: Fiber,
   ): void
-  hideInstance?(instance: Instance): void
-  hideTextInstance?(textInstance: TextInstance): void
-  unhideInstance?(instance: Instance, props: Props): void
-  unhideTextInstance?(textInstance: TextInstance, text: string): void
-  clearContainer?(container: Container): void
+  // hideInstance?(instance: Instance): void
+  // hideTextInstance?(textInstance: TextInstance): void
+  // unhideInstance?(instance: Instance, props: Props): void
+  // unhideTextInstance?(textInstance: TextInstance, text: string): void
+  // clearContainer?(container: Container): void
 }
-
-// Unimplemented:
-// appendInitialChild
-// shouldSetTextContent
-// prepareForCommit, resetAfterCommit
-// resetTextContent, clearContainer
-// portals
