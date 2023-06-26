@@ -37,18 +37,10 @@ export default vite.defineConfig({
     },
     {
       name: 'vite-minify',
-      transform(code, url) {
-        if (!url.includes('node_modules')) {
-          for (const key in mangleMap) code = code.replaceAll(key, mangleMap[key])
-          return vite.transformWithEsbuild(code, url, {
-            mangleProps: /^_[A-Za-z]\w+/,
-            mangleQuoted: true,
-          })
-        }
-      },
       renderChunk: {
         order: 'post',
         handler(code, { fileName }) {
+          for (const key in mangleMap) code = code.replaceAll(key, mangleMap[key])
           return vite.transformWithEsbuild(code, fileName, { minify: true })
         },
       },
