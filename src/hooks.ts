@@ -205,9 +205,11 @@ function useCallback<T extends Function>(callback: T, deps: React.DependencyList
   return useMemo(() => callback, deps)
 }
 
-// the name of the custom hook is itself derived from the function name at runtime:
-// it's just the function name without the "use" prefix.
-function useDebugValue<T>(value: T, format?: (value: T) => any): void {}
+function useDebugValue<T>(value: T, format?: (value: T) => any): void {
+  // This hook is normally a no-op.
+  // The react-debug-hooks package injects its own implementation
+  // so that e.g. DevTools can display custom hook values.
+}
 
 function useDeferredValue<T>(value: T): T {
   return value
@@ -217,8 +219,9 @@ function useEffect(effect: React.EffectCallback, deps?: React.DependencyList): v
   return mounted ? updateEffect(EFFECT, effect, deps) : mountEffect(EFFECT, effect, deps)
 }
 
+let id = 0
 function useId(): string {
-  return ''
+  return useMemo(() => '' + id++, [])
 }
 
 function useImperativeHandle<T, R extends T>(
@@ -246,7 +249,6 @@ function useLayoutEffect(effect: React.EffectCallback, deps?: React.DependencyLi
   return mounted ? updateEffect(LAYOUT, effect, deps) : mountEffect(LAYOUT, effect, deps)
 }
 
-// allow undefined, but don't make it optional as that is very likely a mistake
 function useMemo<T>(factory: () => T, deps: React.DependencyList | undefined): T {
   return mounted ? updateMemo(factory, deps) : mountMemo(factory, deps)
 }
@@ -267,13 +269,30 @@ function useState<S>(initialState?: S | (() => S)): [S, React.Dispatch<React.Set
   return mounted ? updateState(initialState) : mountState(initialState)
 }
 
-// https://github.com/reactwg/react-18/discussions/86
 function useSyncExternalStore<Snapshot>(
   subscribe: (onStoreChange: () => void) => () => void,
   getSnapshot: () => Snapshot,
   getServerSnapshot?: () => Snapshot,
 ): Snapshot {
-  return null!
+  const value = getSnapshot()
+  const [state, forceUpdate] = useState(() => ({ value, getSnapshot }))
+
+  const invalidate = useCallback(() => {
+    if (!Object.is(state.value, state.getSnapshot())) {
+      forceUpdate(state)
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    state.value = value
+    state.getSnapshot = getSnapshot
+
+    invalidate()
+  }, [subscribe, value, getSnapshot])
+
+  useEffect(() => (invalidate(), subscribe(invalidate)), [subscribe])
+
+  return value
 }
 
 function useTransition(): [boolean, React.TransitionStartFunction] {

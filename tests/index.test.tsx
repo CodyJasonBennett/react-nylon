@@ -178,6 +178,14 @@ for (const suite of ['react-reconciler', 'react-nylon']) {
         React.useInsertionEffect(() => void lifecycle.push('useInsertionEffect'), [])
         React.useLayoutEffect(() => void lifecycle.push('useLayoutEffect'), [])
         React.useEffect(() => void lifecycle.push('useEffect'), [])
+        React.useSyncExternalStore(
+          (onStoreChange) => {
+            onStoreChange()
+            const index = lifecycle.push('useSyncExternalStore')
+            return () => lifecycle.slice(index - 1, 1)
+          },
+          () => null,
+        )
         return null
       }
       let container!: HostContainer
@@ -190,6 +198,7 @@ for (const suite of ['react-reconciler', 'react-nylon']) {
         'ref',
         'useLayoutEffect',
         'useEffect',
+        'useSyncExternalStore',
       ])
       expect(container.head).toBe(null)
     })
