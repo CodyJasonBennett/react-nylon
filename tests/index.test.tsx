@@ -175,6 +175,7 @@ for (const suite of ['react-reconciler', 'react-nylon']) {
         const ref = React.useRef<any>()
         ref.current ??= lifecycle.push('render')
         React.useImperativeHandle(ref, () => void lifecycle.push('ref'))
+        React.useInsertionEffect(() => void lifecycle.push('useInsertionEffect'), [])
         React.useLayoutEffect(() => void lifecycle.push('useLayoutEffect'), [])
         React.useEffect(() => void lifecycle.push('useEffect'), [])
         return null
@@ -185,8 +186,7 @@ for (const suite of ['react-reconciler', 'react-nylon']) {
       expect(lifecycle).toStrictEqual([
         'useState',
         'render',
-        // TODO: call during diffing
-        // 'useInsertionEffect',
+        'useInsertionEffect',
         'ref',
         'useLayoutEffect',
         'useEffect',

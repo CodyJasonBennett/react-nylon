@@ -19,3 +19,4 @@ export const DELETION = 2
 export const NOEFFECT = 0
 export const EFFECT = 1
 export const LAYOUT = 2
+export const INSERTION = 3

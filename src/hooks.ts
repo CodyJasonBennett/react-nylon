@@ -1,4 +1,4 @@
-import { ReactCurrentDispatcher, EFFECT, LAYOUT, NOEFFECT } from './constants'
+import { ReactCurrentDispatcher, EFFECT, LAYOUT, INSERTION, NOEFFECT } from './constants'
 import { promises, scheduleUpdateOnFiber, startTransition } from './scheduler'
 import * as React from 'react'
 import type { Fiber, Hook, Queue, Effect } from './types'
@@ -107,37 +107,19 @@ function updateMemo(cb: Function, deps?: React.DependencyList): any {
   return hook.memoizedState.res
 }
 
-function mountEffect(cb: Function, deps?: React.DependencyList): void {
+function mountEffect(tag: number, cb: Function, deps?: React.DependencyList): void {
   const nextDeps = deps === undefined ? null : deps
-  pushEffect(EFFECT, cb, undefined, nextDeps)
+  pushEffect(tag, cb, undefined, nextDeps)
   effectListIndex++
 }
-function updateEffect(cb: Function, deps?: React.DependencyList): void {
+function updateEffect(tag: number, cb: Function, deps?: React.DependencyList): void {
   const nextDeps = deps === undefined ? null : deps
 
   if (currentHook !== null) {
     const prevEffect = currentlyRenderingFiber!.effect![effectListIndex]
     const destroy = prevEffect.destroy
     const prevDeps = prevEffect.deps
-    const tag = depsChanged(nextDeps, prevDeps) ? EFFECT : NOEFFECT
-    updateCurrentEffect(tag, cb, destroy, nextDeps)
-  }
-  effectListIndex++
-}
-
-function mountLayoutEffect(cb: Function, deps?: React.DependencyList): void {
-  const nextDeps = deps === undefined ? null : deps
-  pushEffect(LAYOUT, cb, undefined, nextDeps)
-  effectListIndex++
-}
-function updateLayoutEffect(cb: Function, deps?: React.DependencyList): void {
-  const nextDeps = deps === undefined ? null : deps
-
-  if (currentHook !== null) {
-    const prevEffect = currentlyRenderingFiber!.effect![effectListIndex]
-    const destroy = prevEffect.destroy
-    const prevDeps = prevEffect.deps
-    const tag = depsChanged(nextDeps, prevDeps) ? LAYOUT : NOEFFECT
+    if (!depsChanged(nextDeps, prevDeps)) tag = NOEFFECT
     updateCurrentEffect(tag, cb, destroy, nextDeps)
   }
   effectListIndex++
@@ -232,7 +214,7 @@ function useDeferredValue<T>(value: T): T {
 }
 
 function useEffect(effect: React.EffectCallback, deps?: React.DependencyList): void {
-  return mounted ? updateEffect(effect, deps) : mountEffect(effect, deps)
+  return mounted ? updateEffect(EFFECT, effect, deps) : mountEffect(EFFECT, effect, deps)
 }
 
 function useId(): string {
@@ -256,11 +238,12 @@ function useImperativeHandle<T, R extends T>(
   }, deps)
 }
 
-// https://github.com/facebook/react/pull/21913
-function useInsertionEffect(effect: React.EffectCallback, deps?: React.DependencyList): void {}
+function useInsertionEffect(effect: React.EffectCallback, deps?: React.DependencyList): void {
+  return mounted ? updateEffect(INSERTION, effect, deps) : mountEffect(INSERTION, effect, deps)
+}
 
 function useLayoutEffect(effect: React.EffectCallback, deps?: React.DependencyList): void {
-  return mounted ? updateLayoutEffect(effect, deps) : mountLayoutEffect(effect, deps)
+  return mounted ? updateEffect(LAYOUT, effect, deps) : mountEffect(LAYOUT, effect, deps)
 }
 
 // allow undefined, but don't make it optional as that is very likely a mistake

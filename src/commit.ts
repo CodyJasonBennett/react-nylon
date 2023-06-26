@@ -5,6 +5,7 @@ import {
   HostText,
   UPDATE,
   NOEFFECT,
+  INSERTION,
   LAYOUT,
   EFFECT,
   FunctionComponent,
@@ -14,18 +15,18 @@ import { startTransition } from './scheduler'
 import type * as React from 'react'
 import type { Fiber } from './types'
 
-function commitHookEffectList(currentFiber: Fiber, effectTag?: any): void {
+function commitHookEffectList(currentFiber: Fiber, effectTag: any, fiberTag?: any): void {
   const effectList = currentFiber.effect
   if (!effectList) return
 
   for (const effect of effectList) {
-    if (effect.tag !== (currentFiber.effectTag == null ? EFFECT : LAYOUT)) continue
+    if (effect.tag !== effectTag) continue
 
-    if (effectTag === DELETION || !effect.deps?.length) {
+    if (fiberTag === DELETION || !effect.deps?.length) {
       effect.destroy?.()
       effect.destroy = undefined
 
-      if (effectTag === DELETION) {
+      if (fiberTag === DELETION) {
         effect.tag = NOEFFECT
         continue
       }
@@ -66,24 +67,28 @@ function commitDeletion(currentFiber: Fiber, returnFiber?: Fiber): void {
       sibling = sibling.sibling
     }
   }
-  startTransition(() => commitHookEffectList(currentFiber, DELETION))
-  commitHookEffectList(currentFiber, DELETION)
+  startTransition(() => commitHookEffectList(currentFiber, EFFECT, DELETION))
+  commitHookEffectList(currentFiber, INSERTION, DELETION)
+  commitHookEffectList(currentFiber, LAYOUT, DELETION)
   handleSubRef(currentFiber)
 }
 
 export function commitRoot(workInProgressRoot: Fiber, deletions: Fiber[]): void {
   for (const fiber of deletions) commitWork(fiber)
-  startTransition(() => commitHookEffectList(workInProgressRoot))
-  commitHookEffectList(workInProgressRoot)
+  startTransition(() => commitHookEffectList(workInProgressRoot, EFFECT))
+  commitHookEffectList(workInProgressRoot, INSERTION)
+  commitHookEffectList(workInProgressRoot, LAYOUT)
   commitWork(workInProgressRoot.child)
   deletions.length = 0
 }
 
 export function commitWork(currentFiber: Fiber | null | undefined): void {
   if (currentFiber == null) return
+
   const effectTag = currentFiber.effectTag
-  startTransition(() => commitHookEffectList(currentFiber, effectTag))
-  commitHookEffectList(currentFiber, effectTag)
+  startTransition(() => commitHookEffectList(currentFiber, EFFECT, effectTag))
+  commitHookEffectList(currentFiber, INSERTION, effectTag)
+  commitHookEffectList(currentFiber, LAYOUT, effectTag)
 
   let returnFiber = currentFiber.return
   while (returnFiber?.tag === FunctionComponent) returnFiber = returnFiber?.return
