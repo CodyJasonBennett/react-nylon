@@ -16,7 +16,7 @@ import { mountChildFibers, reconcileChildFibers } from './reconciler'
 export const promises: Promise<any>[] = []
 const promise: React.MutableRefObject<Promise<any> & { resolve?: Function }> = { current: null! }
 
-export async function act<T = any>(cb: () => Promise<T>): Promise<T> {
+export async function act<T>(cb: () => Promise<T>): Promise<T> {
   let resolve: Function | undefined
   promise.current = new Promise((res) => (resolve = res))
   promise.current.resolve = resolve
@@ -64,7 +64,7 @@ let nextUnitOfWork: Fiber | null = null
 
 export function scheduleUpdateOnFiber(oldFiber: Fiber): void {
   startTransition((deadline: IdleDeadline) => {
-    const newFiber = {
+    const newFiber: Fiber = {
       ...oldFiber,
       alternate: oldFiber,
     }
@@ -224,7 +224,7 @@ export function Reconciler<
     },
     createPortal(
       children: ReactNode,
-      containerInfo: any,
+      containerInfo: Container,
       // TODO: figure out the API for cross-renderer implementation.
       implementation?: any,
       key?: string | null,
@@ -241,8 +241,6 @@ export function Reconciler<
       bundleType: 0 | 1
       version: string
       rendererPackageName: string
-      // Note: this actually *does* depend on Fiber internal fields.
-      // Used by "inspect clicked DOM element" in React DevTools.
       findFiberByHostInstance?: (instance: Instance | TextInstance) => Fiber | null
       rendererConfig?: any
     }): boolean {

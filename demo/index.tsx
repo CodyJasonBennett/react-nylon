@@ -75,9 +75,9 @@ const reconciler = Reconciler<
   getPublicInstance(instance) {
     return instance
   },
-  appendInitialChild(parent, child) {
-    parent.appendChild(child)
-  },
+  // appendInitialChild(parent, child) {
+  //   parent.appendChild(child)
+  // },
   appendChild(parent, child) {
     parent.appendChild(child)
   },
@@ -104,27 +104,27 @@ const reconciler = Reconciler<
     return false
   },
   commitMount(instance, type, props, internalHandle) {},
-  // Unimplemented
-  shouldSetTextContent(type, props) {
-    return true
-  },
-  getRootHostContext(rootContainer) {
-    return null
-  },
-  getChildHostContext(parentHostContext, type, rootContainer) {
-    return null
-  },
-  prepareForCommit(containerInfo) {
-    return null
-  },
-  resetAfterCommit(containerInfo) {},
-  resetTextContent(instance) {},
-  hideInstance(instance) {},
-  hideTextInstance(textInstance) {},
-  unhideInstance(instance, props) {},
-  unhideTextInstance(textInstance, text) {},
-  clearContainer(container) {},
   preparePortalMount(containerInfo) {},
+  // Unimplemented
+  // shouldSetTextContent(type, props) {
+  //   return true
+  // },
+  // getRootHostContext(rootContainer) {
+  //   return null
+  // },
+  // getChildHostContext(parentHostContext, type, rootContainer) {
+  //   return null
+  // },
+  // prepareForCommit(containerInfo) {
+  //   return null
+  // },
+  // resetAfterCommit(containerInfo) {},
+  // resetTextContent(instance) {},
+  // hideInstance(instance) {},
+  // hideTextInstance(textInstance) {},
+  // unhideInstance(instance, props) {},
+  // unhideTextInstance(textInstance, text) {},
+  // clearContainer(container) {},
 })
 
 let i = 1

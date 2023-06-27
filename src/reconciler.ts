@@ -49,13 +49,13 @@ function deleteChild(firstChild: Fiber | null | undefined, child: Fiber): void {
   }
 }
 
-function createChild(returnFiber: Fiber, newChild: Fiber): Fiber {
+function createChild(returnFiber: Fiber, newChild: any): Fiber {
   const created = createFiberFromElement(newChild)
   created.return = returnFiber
   return created
 }
 
-function updateElement(wip: Fiber, oldFiber: Fiber, newChild: Fiber): Fiber {
+function updateElement(wip: Fiber, oldFiber: Fiber, newChild: any): Fiber {
   if (oldFiber != null && oldFiber.type === newChild.type) {
     const newFiber: Fiber = {
       ...oldFiber,
