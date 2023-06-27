@@ -12,6 +12,7 @@ function createFiberFromElement(element: any): Fiber {
     tag = HostPortal
     props = element
   } else if (typeof element === 'string' || typeof element === 'number') {
+    type = ''
     tag = HostText
     props = { text: element }
   } else if (typeof type === 'string') {
