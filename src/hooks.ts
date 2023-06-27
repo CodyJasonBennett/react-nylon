@@ -191,7 +191,11 @@ function useDebugValue<T>(value: T, format?: (value: T) => any): void {
 }
 
 function useDeferredValue<T>(value: T): T {
-  return value
+  const [deferredValue, setDeferredValue] = useState(value)
+
+  useEffect(() => startTransition(() => setDeferredValue(value)), [value])
+
+  return deferredValue
 }
 
 let id = 0
