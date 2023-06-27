@@ -220,7 +220,7 @@ export function Reconciler<
       workInProgressRoots.push(rootFiber)
       startTransition(bridge)
 
-      // if (callback) startTransition(callback)
+      if (callback) startTransition(callback)
     },
     createPortal(
       children: ReactNode,
@@ -248,5 +248,5 @@ export function Reconciler<
     }): boolean {
       return false
     },
-  } as unknown as any
+  }
 }
