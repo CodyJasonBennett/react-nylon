@@ -196,8 +196,8 @@ export function Reconciler<
     updateContainer(
       element: ReactNode,
       container: Container,
-      parentComponent: React.Component<any, any>,
-      callback?: Function,
+      parentComponent?: React.Component<any, any> | null,
+      callback?: (() => void) | null,
     ): void {
       configs.set(container, config)
 
