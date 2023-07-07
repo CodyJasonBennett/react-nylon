@@ -86,11 +86,6 @@ export function commitRoot(workInProgressRoot: Fiber, deletions: Fiber[]): void 
 export function commitWork(currentFiber: Fiber | null | undefined): void {
   if (currentFiber == null) return
 
-  const effectTag = currentFiber.effectTag
-  startTransition(() => commitHookEffectList(currentFiber, EFFECT, effectTag))
-  commitHookEffectList(currentFiber, INSERTION, effectTag)
-  commitHookEffectList(currentFiber, LAYOUT, effectTag)
-
   let returnFiber = currentFiber.return
   while (returnFiber?.tag === FunctionComponent) returnFiber = returnFiber?.return
 
@@ -159,7 +154,7 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
       }
     }
   } else if (currentFiber.effectTag === DELETION) {
-    return commitDeletion(currentFiber, returnFiber)
+    commitDeletion(currentFiber, returnFiber)
   } else if (currentFiber.effectTag === UPDATE) {
     if (currentFiber.tag === HostText) {
       if (currentFiber.alternate?.props.text !== currentFiber.props.text) {
@@ -193,6 +188,7 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
     }
   }
 
+  const effectTag = currentFiber.effectTag
   currentFiber.effectTag = null
   commitWork(currentFiber.child)
   commitWork(currentFiber.sibling)
@@ -206,4 +202,8 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
       ? currentFiber.ref(publicInstance)
       : ((currentFiber.ref as React.MutableRefObject<any>).current = publicInstance)
   }
+
+  startTransition(() => commitHookEffectList(currentFiber, EFFECT, effectTag))
+  commitHookEffectList(currentFiber, INSERTION, effectTag)
+  commitHookEffectList(currentFiber, LAYOUT, effectTag)
 }
