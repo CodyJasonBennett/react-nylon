@@ -121,7 +121,7 @@ function performUnitOfWork<P>(unitOfWorkFiber: Fiber<P>): Fiber<P> | null {
 }
 
 const workInProgressRoots: Fiber[] = []
-const configs = new WeakMap<any, HostConfig<any, any, any, any, any, any, any, any, any, any, any, any, any>>()
+const configs = new Map<any, HostConfig<any, any, any, any, any, any, any, any, any, any, any, any, any>>()
 
 function bridge(deadline: IdleDeadline): void {
   while (nextUnitOfWork != null && deadline.timeRemaining() > 0) {
