@@ -5,7 +5,7 @@ import type { Fiber } from './types'
 function createFiberFromElement(element: any): Fiber {
   if (typeof element.then === 'function') element = element.value
 
-  let { type, props, ref, key } = element
+  let { type, props = {}, ref, key } = element
   let tag
 
   if (element.$$typeof === Symbol.for('react.portal')) {
@@ -19,7 +19,7 @@ function createFiberFromElement(element: any): Fiber {
     tag = HostComponent
   } else {
     tag = FunctionComponent
-    if (typeof type !== 'function') type = type.render ?? type.type ?? type.$$typeof
+    if (typeof type !== 'function') type = type?.render ?? type?.type ?? type?.$$typeof ?? type
   }
 
   return {
