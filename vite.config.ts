@@ -1,48 +1,45 @@
 import * as path from 'node:path'
 import * as vite from 'vite'
+import { minify } from 'shaderkit'
 
-const mangleMap: Record<string, string> = {}
+const uniforms: Record<string, string> = {
+  time: 't',
+  resolution: 'r',
+  mouse: 'm',
+}
 
 export default vite.defineConfig({
-  root: process.argv[2] ? undefined : 'demo',
+  root: 'demo',
   resolve: {
     alias: {
+      react:
+        process.env.NODE_ENV === 'production'
+          ? path.resolve(__dirname, 'node_modules/react/cjs/react.production.min.js')
+          : 'react',
       'react-nylon': path.resolve(__dirname, 'src'),
     },
   },
   build: {
-    sourcemap: true,
-    target: 'es2020',
-    lib: {
-      formats: ['es', 'cjs'],
-      entry: 'src/index.ts',
-      fileName: '[name]',
-    },
-    rollupOptions: {
-      external: (id: string) => !id.startsWith('.') && !path.isAbsolute(id),
-      output: {
-        sourcemapExcludeSources: true,
-        exports: 'named',
-      },
-    },
+    modulePreload: false,
+    target: 'esnext',
   },
   plugins: [
     {
-      name: 'vite-tsc',
+      name: 'glsl-minify',
       generateBundle(_, bundle) {
-        if (bundle['index.mjs']) {
-          this.emitFile({ type: 'asset', fileName: 'index.d.ts', source: `export * from '../src'` })
+        for (const key in bundle) {
+          const entry = bundle[key]
+          if ('code' in entry) {
+            for (const key in uniforms) {
+              entry.code = entry.code.replaceAll(new RegExp(`\\b${key}\\b`, 'g'), uniforms[key])
+            }
+
+            entry.code = entry.code.replace(
+              /`(#version[^`]+?)`/g,
+              (_, shader) => `"${minify(shader).replaceAll('\n', '\\n')}"`,
+            )
+          }
         }
-      },
-    },
-    {
-      name: 'vite-minify',
-      renderChunk: {
-        order: 'post',
-        handler(code, { fileName }) {
-          for (const key in mangleMap) code = code.replaceAll(key, mangleMap[key])
-          return vite.transformWithEsbuild(code, fileName, { minify: true })
-        },
       },
     },
   ],
