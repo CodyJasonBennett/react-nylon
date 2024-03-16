@@ -64,7 +64,7 @@ function readContext<T>(context: React.Context<T>): T {
     contextFiber = contextFiber.return
   }
 
-  return contextFiber ? contextFiber.props.value : (context as any)._defaultValue
+  return contextFiber ? contextFiber.props.value : (context as any)._currentValue
 }
 
 function useContext<T>(context: React.Context<T>): T {
