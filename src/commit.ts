@@ -45,7 +45,7 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
   let returnFiber = currentFiber.return
   while (returnFiber?.tag === FunctionComponent) returnFiber = returnFiber?.return
 
-  if (returnFiber) {
+  if (returnFiber && currentFiber.tag !== HostRoot) {
     const returnInstance = returnFiber?.stateNode
     const isContainer =
       returnInstance && (!returnFiber.return || returnFiber.tag === HostPortal || returnFiber!.tag === HostRoot)
