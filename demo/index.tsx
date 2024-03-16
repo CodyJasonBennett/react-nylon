@@ -109,18 +109,17 @@ function applyProps<T extends HTMLElement>(instance: T, oldProps: Props, newProp
   return instance
 }
 
-const context = React.createContext<number>(null!)
+const context = React.createContext<number>(0)
 
 const primary = Reconciler(config)
 const secondary = Reconciler(config)
+const tertiary = Reconciler(config)
 
-function App() {
-  const id = React.useId()
-  const [count, setCount] = React.useState(0)
-  const value = React.useContext(context)
-  React.useEffect(() => console.log({ id, count, value }), [id, count, value])
-  return <h1 onClick={() => setCount((v) => v + 1)}>Hello from renderer {id}</h1>
-}
+const App = () => (
+  <h1>
+    Root {React.useId()}; context: {React.useContext(context)}
+  </h1>
+)
 
 const root = primary.createContainer(document.getElementById('root1')!, 1, null, false, null, '', console.error, null)
 primary.updateContainer(
@@ -136,6 +135,7 @@ primary.updateContainer(
         </>,
         document.getElementById('root3')!,
       )}
+      {tertiary.createRoot(<App />, document.getElementById('root5')!)}
     </context.Provider>
   </>,
   root,
