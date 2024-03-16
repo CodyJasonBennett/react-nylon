@@ -1,4 +1,13 @@
-import { HostPortal, HostText, HostComponent, FunctionComponent, DELETION, PLACEMENT, UPDATE } from './constants'
+import {
+  HostRoot,
+  HostPortal,
+  HostText,
+  HostComponent,
+  FunctionComponent,
+  DELETION,
+  PLACEMENT,
+  UPDATE,
+} from './constants'
 import { deletions } from './scheduler'
 import type { Fiber } from './types'
 
@@ -8,7 +17,10 @@ function createFiberFromElement(element: any): Fiber {
   let { type, props = {}, ref, key } = element
   let tag
 
-  if (element.$$typeof === Symbol.for('react.portal')) {
+  if (element.$$typeof === Symbol.for('react.root')) {
+    tag = HostRoot
+    props = element
+  } else if (element.$$typeof === Symbol.for('react.portal')) {
     tag = HostPortal
     props = element
   } else if (typeof element === 'string' || typeof element === 'number') {

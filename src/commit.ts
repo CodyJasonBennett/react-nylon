@@ -11,6 +11,7 @@ import {
   FunctionComponent,
   ReactCurrentRoot,
   HostPortal,
+  HostRoot,
 } from './constants'
 import { startTransition } from './scheduler'
 import type * as React from 'react'
@@ -46,7 +47,8 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
 
   if (returnFiber) {
     const returnInstance = returnFiber?.stateNode
-    const isContainer = returnInstance && (!returnFiber!.return || returnFiber!.tag === HostPortal)
+    const isContainer =
+      returnInstance && (!returnFiber.return || returnFiber.tag === HostPortal || returnFiber!.tag === HostRoot)
     if (currentFiber.effectTag === PLACEMENT) {
       if (currentFiber.stateNode != null && currentFiber.tag !== FunctionComponent) {
         if (currentFiber.return?.tag === FunctionComponent && currentFiber.return?.siblingNode != null) {

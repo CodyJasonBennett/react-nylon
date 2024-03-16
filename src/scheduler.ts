@@ -1,4 +1,4 @@
-import type { ReactNode, ReactPortal } from 'react'
+import type { ReactNode, ReactElement, Key, ReactPortal } from 'react'
 import { commitRoot } from './commit'
 import {
   ReactCurrentRoot,
@@ -94,6 +94,9 @@ function beginWork(current: Fiber | null, workInProgress: Fiber): void {
   } else if (workInProgress.tag === HostPortal) {
     const containerInfo = (workInProgress.stateNode ??= workInProgress.props.containerInfo)
     if (current == null) ReactCurrentHostConfig.current.preparePortalMount(containerInfo)
+  } else if (workInProgress.tag === HostRoot) {
+    workInProgress.stateNode ??= workInProgress.props.containerInfo
+    ReactCurrentHostConfig.current = workInProgress.props.implementation
   }
 
   const children =
@@ -144,6 +147,11 @@ function bridge(deadline: IdleDeadline): void {
 
     return startTransition(bridge)
   }
+}
+
+export interface ReactRoot extends ReactElement {
+  key: Key | null
+  children: ReactNode
 }
 
 export function Reconciler<
@@ -201,10 +209,14 @@ export function Reconciler<
     ): void {
       configs.set(container, config)
 
+      // Emulates a rendered ReactRoot
       const currentRoot: Fiber = {
         tag: HostRoot,
-        stateNode: container,
-        props: { children: [element] },
+        props: {
+          children: [element],
+          containerInfo: container,
+          implementation: config,
+        },
       }
 
       if (rootFiber?.alternate != null) {
@@ -236,6 +248,14 @@ export function Reconciler<
         containerInfo,
         implementation,
       } as unknown as ReactPortal
+    },
+    createRoot(children: ReactNode, containerInfo: Container): ReactRoot {
+      return {
+        $$typeof: Symbol.for('react.root'),
+        children,
+        containerInfo,
+        implementation: config,
+      } as unknown as ReactRoot
     },
     injectIntoDevTools(devToolsConfig: {
       bundleType: 0 | 1

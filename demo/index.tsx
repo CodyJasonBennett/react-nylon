@@ -1,68 +1,23 @@
 import * as React from 'react'
-import { Reconciler } from 'react-nylon'
+import { HostConfig, Reconciler } from 'react-nylon'
 
-interface HostConfig {
-  type: string
-  props: Record<string, any>
-  container: HTMLElement
-  instance: HTMLElement
-  textInstance: Text
-  suspenseInstance: never
-  hydratableInstance: never
-  publicInstance: HTMLElement
-  hostContext: null
-  updatePayload: void
-  childSet: never
-  timeoutHandle: number
-  noTimeout: -1
-}
+type Props = Record<string, any>
 
-function applyProps<T extends HostConfig['instance']>(
-  instance: T,
-  oldProps: HostConfig['props'],
-  newProps: HostConfig['props'],
-): T {
-  for (const key in { ...oldProps, ...newProps }) {
-    const oldValue = oldProps[key]
-    const newValue = newProps[key]
-
-    if (Object.is(oldValue, newValue) || key === 'children') continue
-
-    if (key === 'style') {
-      for (const k in { ...oldValue, ...newValue } as CSSStyleDeclaration) {
-        if (oldValue?.[k] !== newValue?.[k]) {
-          instance.style[k] = newValue?.[k] ?? ''
-        }
-      }
-    } else if (key.startsWith('on')) {
-      const event = key.slice(2).toLowerCase()
-      if (oldValue) instance.removeEventListener(event, oldValue)
-      instance.addEventListener(event, newValue)
-    } else if (newValue == null) {
-      instance.removeAttribute(key)
-    } else {
-      instance.setAttribute(key, newValue)
-    }
-  }
-
-  return instance
-}
-
-const reconciler = Reconciler<
-  HostConfig['type'],
-  HostConfig['props'],
-  HostConfig['container'],
-  HostConfig['instance'],
-  HostConfig['textInstance'],
-  HostConfig['suspenseInstance'],
-  HostConfig['hydratableInstance'],
-  HostConfig['publicInstance'],
-  HostConfig['hostContext'],
-  HostConfig['updatePayload'],
-  HostConfig['childSet'],
-  HostConfig['timeoutHandle'],
-  HostConfig['noTimeout']
->({
+const config: HostConfig<
+  string, // type
+  Props, // props
+  HTMLElement, // container
+  HTMLElement, // instance
+  Text, // textInstance
+  HTMLElement, // suspenseInstance
+  HTMLElement, // hydratableInstance
+  HTMLElement, // publicInstance
+  null, // hostConfig
+  void, // updatePayload
+  never, // childSet
+  number, // timeoutHandle
+  -1 // noTimeout
+> = {
   createInstance(type, props) {
     return applyProps(document.createElement(type), {}, props)
   },
@@ -125,21 +80,59 @@ const reconciler = Reconciler<
   // unhideInstance(instance, props) {},
   // unhideTextInstance(textInstance, text) {},
   // clearContainer(container) {},
-})
+}
 
-let i = 1
+function applyProps<T extends HTMLElement>(instance: T, oldProps: Props, newProps: Props): T {
+  for (const key in { ...oldProps, ...newProps }) {
+    const oldValue = oldProps[key]
+    const newValue = newProps[key]
+
+    if (Object.is(oldValue, newValue) || key === 'children') continue
+
+    if (key === 'style') {
+      for (const k in { ...oldValue, ...newValue } as CSSStyleDeclaration) {
+        if (oldValue?.[k] !== newValue?.[k]) {
+          instance.style[k] = newValue?.[k] ?? ''
+        }
+      }
+    } else if (key.startsWith('on')) {
+      const event = key.slice(2).toLowerCase()
+      if (oldValue) instance.removeEventListener(event, oldValue)
+      instance.addEventListener(event, newValue)
+    } else if (newValue == null) {
+      instance.removeAttribute(key)
+    } else {
+      instance.setAttribute(key, newValue)
+    }
+  }
+
+  return instance
+}
+
+const primary = Reconciler(config)
+const secondary = Reconciler(config)
 
 function App() {
-  const id = React.useMemo(() => i++, [])
+  const id = React.useId()
   const [count, setCount] = React.useState(0)
   React.useEffect(() => console.log({ id, count }), [id, count])
   return <h1 onClick={() => setCount((v) => v + 1)}>Hello from renderer {id}</h1>
 }
 
-await Promise.all(
-  ['root', 'root2', 'root3'].map(async (id) => {
-    const container = document.getElementById(id)!
-    const root = reconciler.createContainer(container, 1, null, false, null, '', console.error, null)
-    reconciler.updateContainer(<App />, root, null, undefined)
-  }),
+const root = primary.createContainer(document.getElementById('root1')!, 1, null, false, null, '', console.error, null)
+primary.updateContainer(
+  <>
+    <App />
+    {primary.createRoot(<App />, document.getElementById('root2')!)}
+    {secondary.createRoot(
+      <>
+        <App />
+        {primary.createRoot(<App />, document.getElementById('root4')!)}
+      </>,
+      document.getElementById('root3')!,
+    )}
+  </>,
+  root,
+  null,
+  undefined,
 )
