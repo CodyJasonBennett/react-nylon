@@ -39,8 +39,53 @@ function commitHookEffectList(currentFiber: Fiber, effectTag: any, fiberTag?: an
   }
 }
 
+function handleSubRef(currentFiber: Fiber | undefined): void {
+  if (currentFiber == null) return
+  handleSubRef(currentFiber.child)
+  handleSubRef(currentFiber.sibling)
+  if (currentFiber.ref != null) {
+    typeof currentFiber.ref === 'function'
+      ? currentFiber.ref(null)
+      : ((currentFiber.ref as React.MutableRefObject<any>).current = null)
+    currentFiber.ref = null
+  }
+}
+function commitDeletion(currentFiber: Fiber, returnFiber?: Fiber): void {
+  const returnInstance = returnFiber?.stateNode
+  const isContainer = returnInstance && !returnFiber?.return
+
+  if (currentFiber.stateNode != null && currentFiber.tag !== FunctionComponent) {
+    if (isContainer) {
+      ReactCurrentHostConfig.current.removeChildFromContainer!(returnInstance, currentFiber.stateNode)
+    } else {
+      ReactCurrentHostConfig.current.removeChild!(returnInstance, currentFiber.stateNode)
+    }
+  } else if (currentFiber.child != null) {
+    commitDeletion(currentFiber.child, returnFiber)
+
+    let sibling: Fiber | undefined = currentFiber.child.sibling
+    while (sibling != null) {
+      commitDeletion(sibling, returnFiber)
+      sibling = sibling.sibling
+    }
+  }
+  startTransition(() => commitHookEffectList(currentFiber, EFFECT, DELETION))
+  commitHookEffectList(currentFiber, INSERTION, DELETION)
+  commitHookEffectList(currentFiber, LAYOUT, DELETION)
+  handleSubRef(currentFiber)
+}
+
+export function commitRoot(workInProgressRoot: Fiber, deletions: Fiber[]): void {
+  for (const fiber of deletions) commitWork(fiber)
+  startTransition(() => commitHookEffectList(workInProgressRoot, EFFECT))
+  commitHookEffectList(workInProgressRoot, INSERTION)
+  commitHookEffectList(workInProgressRoot, LAYOUT)
+  commitWork(workInProgressRoot.child)
+  deletions.length = 0
+}
+
 export function commitWork(currentFiber: Fiber | null | undefined): void {
-  if (!currentFiber) return
+  if (currentFiber == null) return
 
   let returnFiber = currentFiber.return
   while (returnFiber?.tag === FunctionComponent) returnFiber = returnFiber?.return
@@ -48,7 +93,7 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
   if (returnFiber && currentFiber.tag !== HostRoot) {
     const returnInstance = returnFiber?.stateNode
     const isContainer =
-      returnInstance && (!returnFiber.return || returnFiber.tag === HostPortal || returnFiber!.tag === HostRoot)
+      returnInstance && (!returnFiber!.return || returnFiber!.tag === HostPortal || returnFiber!.tag === HostRoot)
     if (currentFiber.effectTag === PLACEMENT) {
       if (currentFiber.stateNode != null && currentFiber.tag !== FunctionComponent) {
         if (currentFiber.return?.tag === FunctionComponent && currentFiber.return?.siblingNode != null) {
@@ -112,13 +157,7 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
         }
       }
     } else if (currentFiber.effectTag === DELETION) {
-      if (currentFiber.stateNode != null && currentFiber.tag !== FunctionComponent) {
-        if (isContainer) {
-          ReactCurrentHostConfig.current.removeChildFromContainer!(returnInstance, currentFiber.stateNode)
-        } else {
-          ReactCurrentHostConfig.current.removeChild!(returnInstance, currentFiber.stateNode)
-        }
-      }
+      commitDeletion(currentFiber, returnFiber)
     } else if (currentFiber.effectTag === UPDATE) {
       if (currentFiber.tag === HostText) {
         if (currentFiber.alternate?.props.text !== currentFiber.props.text) {
@@ -171,9 +210,4 @@ export function commitWork(currentFiber: Fiber | null | undefined): void {
   startTransition(() => commitHookEffectList(currentFiber, EFFECT, effectTag))
   commitHookEffectList(currentFiber, INSERTION, effectTag)
   commitHookEffectList(currentFiber, LAYOUT, effectTag)
-}
-
-export function commitRoot(workInProgressRoot: Fiber, deletions: Fiber[]): void {
-  while (deletions.length) commitWork(deletions.shift())
-  commitWork(workInProgressRoot)
 }
