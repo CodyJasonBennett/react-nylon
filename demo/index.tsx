@@ -115,11 +115,17 @@ const primary = Reconciler(config)
 const secondary = Reconciler(config)
 const tertiary = Reconciler(config)
 
-const App = () => (
-  <h1>
-    Root {React.useId()}; context: {React.useContext(context)}
-  </h1>
-)
+function App() {
+  const id = React.useId()
+  const [count, setCount] = React.useState(0)
+  React.useEffect(() => console.log({ id, count }), [id, count])
+  const value = React.useContext(context)
+  return (
+    <h1 onClick={() => setCount((v) => v + 1)}>
+      Root {id}; context: {value}; count {count}
+    </h1>
+  )
+}
 
 const root = primary.createContainer(document.getElementById('root1')!, 1, null, false, null, '', console.error, null)
 primary.updateContainer(
