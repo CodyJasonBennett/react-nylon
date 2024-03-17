@@ -60,7 +60,7 @@ function effectImpl(tag: number, create: Function, deps: React.DependencyList | 
 
 function readContext<T>(context: React.Context<T>): T {
   let contextFiber = currentlyRenderingFiber!.return
-  while (contextFiber && contextFiber.type !== Symbol.for('react.provider')) {
+  while (contextFiber && contextFiber?.props._context !== context) {
     contextFiber = contextFiber.return
   }
 

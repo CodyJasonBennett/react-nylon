@@ -31,6 +31,11 @@ function createFiberFromElement(element: any): Fiber {
     tag = HostComponent
   } else {
     tag = FunctionComponent
+
+    if (type?.$$typeof === Symbol.for('react.provider')) {
+      props = { ...props, _context: type._context }
+    }
+
     if (typeof type !== 'function') type = type?.render ?? type?.type ?? type?.$$typeof ?? type
   }
 
